@@ -55,6 +55,9 @@ def _nodes_grouped(nodes):
 _MKDIR_DST_CMD = 'mkdir -p {}'
 _UPDATE_M3_CMD = 'source /etc/profile && /usr/bin/flash_a8_m3 {}'
 _RESET_M3_CMD = 'source /etc/profile && /usr/bin/reset_a8_m3'
+_MAKE_EXECUTABLE_CMD = 'chmod +x {}'
+_RUN_SCRIPT_CMD = 'screen -S {screen} -dm bash -c \"{path}\"'
+_QUIT_SCRIPT_CMD = 'screen -X -S {screen} quit'
 
 
 def flash_m3(config_ssh, nodes, firmware, verbose=False):
@@ -112,3 +115,34 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
         result = {"1": nodes}
 
     return {"wait-for-boot": result}
+
+
+def run_script(config_ssh, nodes, script, verbose=False):
+    """Run a script in background on the A8 nodes."""
+
+    # Configure ssh.
+    groups = _nodes_grouped(nodes)
+    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
+
+    screen = '{user}-{exp_id}'.format(**config_ssh)
+    remote_script = os.path.join('~/A8/.iotlabsshcli',
+                                 os.path.basename(script))
+    script_data = {'screen': screen,
+                   'path': remote_script}
+
+    # Create destination directory
+    ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_script)))
+
+    # Copy script on sites.
+    ssh.scp(script, remote_script)
+
+    # Make script executable
+    ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script))
+
+    # Kill any running script
+    ssh.run(_QUIT_SCRIPT_CMD.format(**script_data))
+
+    # Run script on all nodes
+    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data))
+
+    return {"run-script": result}

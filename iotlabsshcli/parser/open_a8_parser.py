@@ -61,12 +61,19 @@ def parse_options():
     # wait-for-boot parser
     boot_parser = subparsers.add_parser('wait-for-boot',
                                         help='Waits until A8 node have boot')
-
     boot_parser.add_argument('--max-wait',
                              type=int,
                              default=120,
                              help='Maximum waiting delay for A8 nodes boot '
                                   '(in seconds)')
+
+    # run-script parser
+    run_script_parser = subparsers.add_parser('run-script',
+                                              help='Run a script in background'
+                                                   'on the A8 node')
+    run_script_parser.add_argument('script', help='script path.')
+    # nodes list or exclude list
+    common.add_nodes_selection_list(run_script_parser)
 
     # nodes list or exclude list
     common.add_nodes_selection_list(boot_parser)
@@ -86,6 +93,7 @@ def open_a8_parse_and_run(opts):
 
     config_ssh = {
         'user': user,
+        'exp_id': exp_id
     }
 
     nodes = common.list_nodes(api, exp_id, opts.nodes_list,
@@ -110,6 +118,10 @@ def open_a8_parse_and_run(opts):
         return iotlabsshcli.open_a8.wait_for_boot(config_ssh, nodes,
                                                   max_wait=opts.max_wait,
                                                   verbose=opts.verbose)
+    elif command == 'run-script':
+        return iotlabsshcli.open_a8.run_script(config_ssh, nodes,
+                                               script=opts.script,
+                                               verbose=opts.verbose)
     else:  # pragma: no cover
         raise ValueError('Unknown command {0}'.format(command))
 
