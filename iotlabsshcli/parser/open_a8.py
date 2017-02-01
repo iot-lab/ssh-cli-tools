@@ -90,6 +90,9 @@ def open_a8_parse_and_run(opts):
     nodes = common.list_nodes(api, exp_id, opts.nodes_list,
                               opts.exclude_nodes_list)
 
+    # Only if nodes_list or exclude_nodes_list is not specify (nodes = [])
+    if not nodes: nodes = common._get_experiment_nodes_list(api, exp_id)
+
     # Only keep A8 nodes
     nodes = ["node-{0}".format(node)
              for node in nodes if node.startswith('a8')]
