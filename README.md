@@ -21,8 +21,8 @@ SSH CLI Tools can be used in conjunction with the
 
 [![build][build-icon]][build-page]
 
-[build-icon]: https://travis-ci.org/iot-lab/ssh-cli-tools.svg?branch=master
-[build-page]: https://travis-ci.org/iot-lab/ssh-cli-tools
+[build-icon]: https://travis-ci.com/iot-lab/ssh-cli-tools.svg?branch=master
+[build-page]: https://travis-ci.com/iot-lab/ssh-cli-tools
 
 ### Installation:
 
