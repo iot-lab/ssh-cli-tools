@@ -114,7 +114,7 @@ class OpenA8Ssh(object):
         if self.verbose:
             utils.enable_logger(utils.logger)
 
-    def run(self, command):
+    def run(self, command, **kwargs):
         """Run ssh command using Parallel SSH."""
         result = {"0": [], "1": []}
         for site in self.groups:
@@ -124,7 +124,7 @@ class OpenA8Ssh(object):
                                                   '.iot-lab.info'.format(site),
                                        proxy_user=self.config_ssh['user'])
             try:
-                output = client.run_command(command)
+                output = client.run_command(command, **kwargs)
                 client.join(output)
             except AuthenticationException:
                 raise OpenA8SshAuthenticationException(site)

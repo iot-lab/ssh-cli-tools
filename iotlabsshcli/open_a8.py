@@ -143,6 +143,6 @@ def run_script(config_ssh, nodes, script, verbose=False):
     ssh.run(_QUIT_SCRIPT_CMD.format(**script_data))
 
     # Run script on all nodes
-    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data))
+    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data), use_pty=False)
 
     return {"run-script": result}
