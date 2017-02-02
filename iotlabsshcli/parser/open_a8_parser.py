@@ -120,7 +120,7 @@ def open_a8_parse_and_run(opts):
                                                   verbose=opts.verbose)
     elif command == 'run-script':
         return iotlabsshcli.open_a8.run_script(config_ssh, nodes,
-                                               script=opts.script,
+                                               opts.script,
                                                verbose=opts.verbose)
     else:  # pragma: no cover
         raise ValueError('Unknown command {0}'.format(command))
