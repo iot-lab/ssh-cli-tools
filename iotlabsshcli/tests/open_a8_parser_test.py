@@ -63,6 +63,29 @@ class TestMainNodeParser(MainMock):
         reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
                                     verbose=False)
 
+    @patch('iotlabsshcli.open_a8.wait_for_boot')
+    @patch('iotlabcli.parser.common.list_nodes')
+    def test_main_wait_for_boot(self, list_nodes, wait_for_boot):
+        """Run the parser.node.main with wait-for-boot subparser function."""
+        wait_for_boot.return_value = {'result': 'test'}
+        list_nodes.return_value = self._nodes
+
+        args = ['wait-for-boot', '-l', 'saclay,a8,1-5']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
+        wait_for_boot.assert_called_with({'user': 'username'},
+                                         self._root_nodes,
+                                         max_wait=120,
+                                         verbose=False)
+
+        args = ['wait-for-boot', "--max-wait", '10', '-l', 'saclay,a8,1-5']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
+        wait_for_boot.assert_called_with({'user': 'username'},
+                                         self._root_nodes,
+                                         max_wait=10,
+                                         verbose=False)
+
     def test_main_unknown_function(self):
         """Run the parser.node.main with an unknown function."""
         args = ['unknown-cmd']
