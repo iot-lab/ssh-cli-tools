@@ -29,16 +29,33 @@ from scp import SCPClient
 
 
 def _print_output(output, hosts):
+    """Display command output for each host."""
     for host in hosts:
         for _ in output[host]['stdout']:
             pass
 
 
 def _node_fqdn(node, site):
+    """Return the fully qualifed domain name of a node.
+
+    >>> _node_fqdn("node-a8-1", "saclay")
+    'node-a8-1.saclay.iot-lab.info'
+    """
     return '{}.{}.iot-lab.info'.format(node, site)
 
 
 def _cleanup_result(result):
+    """Return empty list from results.
+
+    >>> _cleanup_result({ '0': [], '1': []})
+    {}
+    >>> _cleanup_result({ '0': [1, 2, 3], '1': []})
+    {'0': [1, 2, 3]}
+    >>> _cleanup_result({ '0': [], '1': [1, 2, 3]})
+    {'1': [1, 2, 3]}
+    >>> sorted(_cleanup_result({ '0': [1, 2, 3], '1': [4, 5, 6]}).items())
+    [('0', [1, 2, 3]), ('1', [4, 5, 6])]
+    """
     key_to_del = []
     for key, value in result.items():
         if len(value) == 0:
@@ -50,8 +67,14 @@ def _cleanup_result(result):
 
 
 def _nodes_from_groups(group):
+    """Return the full node list from nodes grouped by sites.
+    >>> _nodes_from_groups({'saclay': ['node-a8-1', 'node-a8-2'],
+    ...                     'grenoble': ['node-a8-10', 'node-a8-11']})
+    ['node-a8-10.grenoble.iot-lab.info', 'node-a8-11.grenoble.iot-lab.info', \
+'node-a8-1.saclay.iot-lab.info', 'node-a8-2.saclay.iot-lab.info']
+    """
     result = []
-    for site, nodes in group.items():
+    for site, nodes in sorted(group.items()):
         for node in nodes:
             result.append(_node_fqdn(node, site))
 
@@ -59,6 +82,14 @@ def _nodes_from_groups(group):
 
 
 def _all_nodes_in_results(nodes, results):
+    """Verify all nodes are successful or failed.
+    >>> _all_nodes_in_results([1, 2, 3, 4], { '0': [1, 2], '1': [3, 4]})
+    False
+    >>> _all_nodes_in_results([1, 2, 3, 4], { '0': [1, 2, 3, 4], '1': []})
+    True
+    >>> _all_nodes_in_results([1, 2, 3, 4], { '0': [], '1': [1, 2, 3, 4]})
+    True
+    """
     return (sorted(nodes) == sorted(results["0"]) or
             sorted(nodes) == sorted(results["1"]))
 
