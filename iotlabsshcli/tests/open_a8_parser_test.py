@@ -109,7 +109,7 @@ class TestMainNodeParser(MainMock):
         args = ['wait-for-boot', '-l', 'saclay,a8,1-5']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        wait_for_boot.assert_called_with({'user': 'username'},
+        wait_for_boot.assert_called_with({'user': 'username', 'exp_id': 123},
                                          self._root_nodes,
                                          max_wait=120,
                                          verbose=False)

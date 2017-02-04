@@ -14,6 +14,7 @@ The provided sub-commands are:
 | `flash-m3`   | Flash the given firmware on the M3 MCU of the A8 node. |
 | `reset-m3`   | Reset the M3 node. |
 | `wait-for-boot`  | Block the execution until all given nodes have booted or maximum wait time has expired |
+| `run-script`  | Run a given script in background on the given nodes |
 
 SSH CLI Tools can be used in conjunction with the
 [IoT-Lab CLI Tools](https://github.com/iot-lab/cli-tools) commands like
@@ -41,9 +42,13 @@ $ sudo pip install .
 ```
 ### Requirement:
 
-Open A8 nodes are reachable through a gateway SSH server (eg. IoT-LAB SSH frontend). For this reason you must
-verify that your SSH public key used by ssh-cli-tools has been recorded in your IoT-LAB user profile. You can
-find how to configure your IoT-LAB SSH access in this [tutorial](https://www.iot-lab.info/tutorials/configure-your-ssh-access/).
+### Requirements:
+
+Open A8 nodes are reachable through a gateway SSH server (eg. IoT-LAB SSH
+frontend). For this reason you must verify that your SSH public key used by
+ssh-cli-tools has been recorded in your IoT-LAB user profile. You can find how
+to configure your IoT-LAB SSH access in this
+[tutorial](https://www.iot-lab.info/tutorials/configure-your-ssh-access/).
 
 ### Examples:
 
@@ -89,6 +94,17 @@ $ open-a8-cli flash-m3 <firmware.elf> -l saclay,a8,2-3+5-7+9-10
             "node-a8-7.saclay.iot-lab.info",
             "node-a8-9.saclay.iot-lab.info",
             "node-a8-10.saclay.iot-lab.info"
+        ]
+    }
+}
+```
+* Run the script `/tmp/test.sh` on `node-a8-2` in saclay:
+```
+$ open-a8-cli run-script /tmp/test.sh -l saclay,a8,2
+{
+    "run-script": {
+        "0": [
+            "node-a8-2.saclay.iot-lab.info"
         ]
     }
 }
