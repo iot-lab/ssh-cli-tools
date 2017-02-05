@@ -24,7 +24,6 @@
 import sys
 import unittest
 
-from iotlabcli import experiment
 from iotlabcli.rest import Api
 from iotlabcli.helpers import json_dumps
 
@@ -65,18 +64,6 @@ def api_mock_stop():
     """ Stop all patches started by api_mock.
     Actually it stops everything but not a problem """
     patch.stopall()
-
-
-# pylint: disable=too-many-public-methods
-class CommandMock(unittest.TestCase):
-    """ Common mock needed for testing commands """
-    def setUp(self):
-        self.api = api_mock()
-        experiment.AliasNodes._alias = 0  # pylint:disable=protected-access
-
-    def tearDown(self):
-        api_mock_stop()
-        patch.stopall()
 
 
 class MainMock(unittest.TestCase):

@@ -21,7 +21,7 @@
 
 """Tests for iotlabsshcli.parser.open_a8 package."""
 
-import iotlabsshcli.parser.open_a8 as open_a8_parser
+from iotlabsshcli.parser import open_a8_parser
 
 from .iotlabsshcli_mock import MainMock
 from .compat import patch

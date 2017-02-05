@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-"""iotlabsshcli package implementing a ssh lib using fabric."""
+"""iotlabsshcli package implementing a ssh lib using parallel-ssh."""
 
 # This file is a part of IoT-LAB ssh-cli-tools
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
