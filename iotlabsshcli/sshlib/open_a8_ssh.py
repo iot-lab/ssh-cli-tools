@@ -168,7 +168,7 @@ class OpenA8Ssh(object):
         start_time = time.time()
         while (start_time + max_wait > time.time() and
                not _check_all_nodes_processed(whole_nodes, result)):
-            for site, nodes in self.groups.items():
+            for site, nodes in sorted(self.groups.items()):
                 for node in nodes:
                     if _node_fqdn(node, site) in result["0"]:
                         continue
