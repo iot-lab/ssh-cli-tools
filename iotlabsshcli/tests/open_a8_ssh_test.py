@@ -57,11 +57,12 @@ def test_open_a8_ssh_run(run_command):
         node_ssh.run(test_command)
 
 
-@patch('pssh.SSHClient')
-@patch('pssh.SSHClient._connect')
 @patch('scp.SCPClient._open')
 @patch('scp.SCPClient.put')
-def test_open_a8_ssh_scp(scp_put, scp_open, connect, client):
+@patch('pssh.SSHClient')
+@patch('pssh.SSHClient._connect')
+def test_open_a8_ssh_scp(connect, client, put, _open):
+    # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
         'user': 'username',
@@ -88,6 +89,7 @@ def test_open_a8_ssh_scp(scp_put, scp_open, connect, client):
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
 def test_open_a8_ssh_wait(connect, client):
+    # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
         'user': 'username',
