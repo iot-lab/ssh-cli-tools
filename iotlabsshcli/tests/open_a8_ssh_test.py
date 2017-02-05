@@ -22,7 +22,7 @@
 """Tests for iotlabsshcli.open_a8 package."""
 
 from pytest import raises
-from pssh.exceptions import AuthenticationException
+from pssh.exceptions import AuthenticationException, ConnectionErrorException
 
 from iotlabsshcli.open_a8 import _nodes_grouped
 from iotlabsshcli.sshlib import OpenA8Ssh, OpenA8SshAuthenticationException
@@ -45,7 +45,7 @@ def test_open_a8_ssh_run(run_command):
     test_command = 'test'
     groups = _nodes_grouped(_ROOT_NODES)
 
-    node_ssh = OpenA8Ssh(config_ssh, groups)
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
     node_ssh.run(test_command)
 
     run_command.call_count = len(_ROOT_NODES)
@@ -74,7 +74,7 @@ def test_open_a8_ssh_scp(connect, client, put, _open):
 
     groups = _nodes_grouped(_ROOT_NODES)
 
-    node_ssh = OpenA8Ssh(config_ssh, groups)
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
     ret = node_ssh.scp(src, dst)
 
     assert ret is None
@@ -88,18 +88,21 @@ def test_open_a8_ssh_scp(connect, client, put, _open):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait(connect, client):
+def test_open_a8_ssh_wait(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
     }
-
     groups = _nodes_grouped(_ROOT_NODES)
 
-    node_ssh = OpenA8Ssh(config_ssh, groups)
+    # normal boot
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
     ret = node_ssh.wait(120)
+    out, err = capsys.readouterr()
+
+    assert len(out.split('\n')) == len(_ROOT_NODES) + 1
 
     assert ret == {'0': _nodes_from_groups(groups)}
 
@@ -108,3 +111,11 @@ def test_open_a8_ssh_wait(connect, client):
 
     with raises(OpenA8SshAuthenticationException):
         node_ssh.wait(120)
+
+    # All nodes failing
+    connect.side_effect = ConnectionErrorException()
+    ret = node_ssh.wait(2)
+
+    out, err = capsys.readouterr()
+    assert len(out.split('\n')) == len(_ROOT_NODES) + 1
+    assert ret == {'1': _nodes_from_groups(groups)}

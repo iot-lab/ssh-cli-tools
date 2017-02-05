@@ -28,16 +28,6 @@ from pssh.exceptions import AuthenticationException, ConnectionErrorException
 from scp import SCPClient
 
 
-def _print_output(output, hosts):
-    """Display command output for each host.
-
-    output is a generator that prints a line at each iteration.
-    """
-    for host in hosts:
-        for _ in output[host]['stdout']:
-            pass
-
-
 def _node_fqdn(node, site):
     """Return the fully qualifed domain name of a node.
 
@@ -143,7 +133,9 @@ class OpenA8Ssh(object):
                     result['1' if output[host]['exit_code'] else '0'].append(
                         '{}.{}.iot-lab.info'.format(host, site))
                 if self.verbose:
-                    _print_output(output, self.groups[site])
+                    for host in self.groups[site]:
+                        for _ in output[host]['stdout']:
+                            pass
         return _cleanup_result(result)
 
     def scp(self, src, dst):
