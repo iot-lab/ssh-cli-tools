@@ -27,9 +27,6 @@ from iotlabsshcli.open_a8 import _RESET_M3_CMD, _UPDATE_M3_CMD, _MKDIR_DST_CMD
 from iotlabsshcli.sshlib import OpenA8SshAuthenticationException
 from .compat import patch
 
-# pylint: disable=too-many-public-methods
-# pylint: disable=too-few-public-methods
-
 _NODES = ['a8-{}.{}.iot-lab.info'.format(n, s)
           for n in range(1, 6) for s in ['saclay', 'grenoble']]
 _ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
