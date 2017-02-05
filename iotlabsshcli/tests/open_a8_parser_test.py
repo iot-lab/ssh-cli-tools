@@ -50,6 +50,12 @@ class TestMainNodeParser(MainMock):
         update_m3.assert_called_with({'user': 'username'}, self._root_nodes,
                                      'firmware.elf', verbose=False)
 
+        args = ['flash-m3', 'firmware.elf']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, None, None)
+        update_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                     'firmware.elf', verbose=False)
+
     @patch('iotlabsshcli.open_a8.reset_m3')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_reset_m3(self, list_nodes, reset_m3):
@@ -60,6 +66,12 @@ class TestMainNodeParser(MainMock):
         args = ['reset-m3', '-l', 'saclay,a8,1-5']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
+        reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                    verbose=False)
+
+        args = ['reset-m3']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, None, None)
         reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
                                     verbose=False)
 
@@ -84,6 +96,14 @@ class TestMainNodeParser(MainMock):
         wait_for_boot.assert_called_with({'user': 'username'},
                                          self._root_nodes,
                                          max_wait=10,
+                                         verbose=False)
+
+        args = ['wait-for-boot']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, None, None)
+        wait_for_boot.assert_called_with({'user': 'username'},
+                                         self._root_nodes,
+                                         max_wait=120,
                                          verbose=False)
 
     def test_main_unknown_function(self):
