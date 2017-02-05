@@ -67,13 +67,14 @@ def flash_m3(config_ssh, nodes, firmware, verbose=False):
         ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_fw)))
     except OpenA8SshAuthenticationException as exc:
         print(exc.msg)
-        return {"1": nodes}
+        result = {"1": nodes}
+    else:
+        # Copy firmware on sites.
+        ssh.scp(firmware, remote_fw)
 
-    # Copy firmware on sites.
-    ssh.scp(firmware, remote_fw)
+        # Run firmware update.
+        result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
 
-    # Run firmware update.
-    result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
     return {"flash-m3": result}
 
 
@@ -89,7 +90,7 @@ def reset_m3(config_ssh, nodes, verbose=False):
         result = ssh.run(_RESET_M3_CMD)
     except OpenA8SshAuthenticationException as exc:
         print(exc.msg)
-        return {"1": nodes}
+        result = {"1": nodes}
 
     return {"reset-m3": result}
 
@@ -106,6 +107,6 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
         result = ssh.wait(max_wait)
     except OpenA8SshAuthenticationException as exc:
         print(exc.msg)
-        return {"1": nodes}
+        result = {"1": nodes}
 
     return {"wait-for-boot": result}

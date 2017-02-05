@@ -174,7 +174,6 @@ class OpenA8Ssh(object):
                         continue
                     if self._try_connection(node, site):
                         result["0"].append(_node_fqdn(node, site))
-
             time.sleep(2)
         for node in whole_nodes:
             if node not in result["0"]:
