@@ -22,8 +22,10 @@
 """Tests for iotlabsshcli.open_a8 package."""
 
 import os.path
-from iotlabsshcli.open_a8 import reset_m3, flash_m3, wait_for_boot
-from iotlabsshcli.open_a8 import _RESET_M3_CMD, _UPDATE_M3_CMD, _MKDIR_DST_CMD
+from iotlabsshcli.open_a8 import reset_m3, flash_m3, wait_for_boot, run_script
+from iotlabsshcli.open_a8 import (_RESET_M3_CMD, _UPDATE_M3_CMD,
+                                  _MKDIR_DST_CMD, _RUN_SCRIPT_CMD,
+                                  _QUIT_SCRIPT_CMD, _MAKE_EXECUTABLE_CMD)
 from iotlabsshcli.sshlib import OpenA8SshAuthenticationException
 from .compat import patch
 
@@ -100,3 +102,41 @@ def test_open_a8_wait_for_boot(wait):
     wait.side_effect = OpenA8SshAuthenticationException('test')
     ret = wait_for_boot(config_ssh, _ROOT_NODES)
     assert ret == {'wait-for-boot': {'1': _ROOT_NODES}}
+
+
+@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
+@patch('iotlabsshcli.sshlib.OpenA8Ssh.scp')
+def test_open_a8_run_script(scp, run):
+    """Test flashing an M3."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+    screen = '{user}-{exp_id}'.format(**config_ssh)
+    script = '/tmp/script.sh'
+    remote_script = os.path.join('~/A8/.iotlabsshcli',
+                                 os.path.basename(script))
+    script_data = {'screen': screen,
+                   'path': remote_script}
+    return_value = {'0': 'test'}
+    run.return_value = return_value
+
+    ret = run_script(config_ssh, _ROOT_NODES, script)
+
+    assert ret == {'run-script': return_value}
+    scp.assert_called_once_with(script, remote_script)
+    assert run.call_count == 4
+
+    run.mock_calls[0].assert_called_with(
+        _MKDIR_DST_CMD.format(os.path.dirname(remote_script)))
+    run.mock_calls[1].assert_called_with(
+        _MAKE_EXECUTABLE_CMD.format(os.path.dirname(remote_script)))
+    run.mock_calls[2].assert_called_with(
+        _QUIT_SCRIPT_CMD.format(**script_data))
+    run.mock_calls[3].assert_called_with(_RUN_SCRIPT_CMD.format(**script_data),
+                                         use_pty=False)
+
+    # Raise an exception
+    run.side_effect = OpenA8SshAuthenticationException('test')
+    ret = run_script(config_ssh, _ROOT_NODES, script)
+    assert ret == {'run-script': {'1': _ROOT_NODES}}

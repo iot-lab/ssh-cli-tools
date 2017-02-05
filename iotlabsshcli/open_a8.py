@@ -130,19 +130,24 @@ def run_script(config_ssh, nodes, script, verbose=False):
     script_data = {'screen': screen,
                    'path': remote_script}
 
-    # Create destination directory
-    ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_script)))
+    try:
+        # Create destination directory
+        ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_script)))
+    except OpenA8SshAuthenticationException as exc:
+        print(exc.msg)
+        result = {"1": nodes}
+    else:
+        # Copy script on sites.
+        ssh.scp(script, remote_script)
 
-    # Copy script on sites.
-    ssh.scp(script, remote_script)
+        # Make script executable
+        ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script))
 
-    # Make script executable
-    ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script))
+        # Kill any running script
+        ssh.run(_QUIT_SCRIPT_CMD.format(**script_data))
 
-    # Kill any running script
-    ssh.run(_QUIT_SCRIPT_CMD.format(**script_data))
-
-    # Run script on all nodes
-    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data), use_pty=False)
+        # Run script on all nodes
+        result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
+                         use_pty=False)
 
     return {"run-script": result}

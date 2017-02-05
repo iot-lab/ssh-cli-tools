@@ -47,13 +47,14 @@ class TestMainNodeParser(MainMock):
         args = ['flash-m3', 'firmware.elf', '-l', 'saclay,a8,1-5']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        flash_m3.assert_called_with({'user': 'username', 'exp_id': 123}, self._root_nodes,
-                                    'firmware.elf', verbose=False)
+        flash_m3.assert_called_with({'user': 'username', 'exp_id': 123},
+                                     self._root_nodes,
+                                     'firmware.elf', verbose=False)
 
         args = ['flash-m3', 'firmware.elf']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, None, None)
-        flash_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+        flash_m3.assert_called_with({'user': 'username', 'exp_id': 123}, self._root_nodes,
                                     'firmware.elf', verbose=False)
 
         exp_info_res = {"items": [{"network_address": node}
@@ -78,7 +79,8 @@ class TestMainNodeParser(MainMock):
         args = ['reset-m3', '-l', 'saclay,a8,1-5']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+        reset_m3.assert_called_with({'user': 'username', 'exp_id': 123},
+                                    self._root_nodes,
                                     verbose=False)
 
         args = ['reset-m3']
@@ -130,7 +132,7 @@ class TestMainNodeParser(MainMock):
             args = ['wait-for-boot']
             open_a8_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
-            wait_for_boot.assert_called_with({'user': 'username'},
+            wait_for_boot.assert_called_with({'user': 'username', 'exp_id': 123},
                                              self._root_nodes,
                                              max_wait=120,
                                              verbose=False)
@@ -149,6 +151,12 @@ class TestMainNodeParser(MainMock):
                                       self._root_nodes,
                                       'script.sh', verbose=False)
 
+        args = ['run-script', 'script.sh']
+        open_a8_parser.main(args)
+        list_nodes.assert_called_with(self.api, 123, None, None)
+        run_script.assert_called_with({'user': 'username', 'exp_id': 123},
+                                      self._root_nodes,
+                                      'script.sh', verbose=False)
 
     def test_main_unknown_function(self):
         """Run the parser.node.main with an unknown function."""
