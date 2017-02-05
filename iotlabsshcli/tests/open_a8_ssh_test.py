@@ -100,7 +100,7 @@ def test_open_a8_ssh_wait(connect, client, capsys):
     # normal boot
     node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
     ret = node_ssh.wait(120)
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
 
     assert len(out.split('\n')) == len(_ROOT_NODES) + 1
 
@@ -112,10 +112,24 @@ def test_open_a8_ssh_wait(connect, client, capsys):
     with raises(OpenA8SshAuthenticationException):
         node_ssh.wait(120)
 
-    # All nodes failing
-    connect.side_effect = ConnectionErrorException()
-    ret = node_ssh.wait(2)
 
-    out, err = capsys.readouterr()
+@patch('pssh.SSHClient')
+@patch('pssh.SSHClient._connect_tunnel')
+def test_open_a8_ssh_wait_failing(connect, client, capsys):
+    # pylint: disable=unused-argument
+    """Test wait for ssh nodes to be available."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+    groups = _nodes_grouped(_ROOT_NODES)
+
+    # all nodes failing
+    connect.side_effect = ConnectionErrorException()
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    ret = node_ssh.wait(2)
+    out, _ = capsys.readouterr()
+
     assert len(out.split('\n')) == len(_ROOT_NODES) + 1
+
     assert ret == {'1': _nodes_from_groups(groups)}
