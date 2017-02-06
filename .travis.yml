@@ -3,7 +3,9 @@ language: python
 matrix:
     include:
         - python: 2.7
-          env: TOX_ENV="py27-tests,cli"
+          env:
+            - TOX_ENV="py27-tests,py27-lint,cli"
+            - COVERAGE="true"
         - python: 3.4
           env: TOX_ENV="py34-tests,cli"
         - python: 3.5
@@ -13,11 +15,13 @@ matrix:
         - python: 3.6
           env: TOX_ENV="py36-tests,cli"
 
-install:
+before_install:
     - pip install tox codecov
 
-script:
+install:
     - pip install .
+
+script:
     - tox -e ${TOX_ENV}
 
 after_success:
