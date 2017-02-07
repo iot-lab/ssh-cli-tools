@@ -88,7 +88,7 @@ def test_open_a8_ssh_scp(connect, client, put, _open):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait(connect, client, capsys):
+def test_open_a8_ssh_wait_all_success(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -105,8 +105,22 @@ def test_open_a8_ssh_wait(connect, client, capsys):
     assert len(out.split('\n')) == len(_ROOT_NODES) + 1
 
     assert ret == {'0': _nodes_from_groups(groups)}
+    assert '1' not in ret.keys()
 
-    # Simulating an exception
+
+@patch('pssh.SSHClient')
+@patch('pssh.SSHClient._connect_tunnel')
+def test_open_a8_ssh_wait_with_authentication_error(connect, client, capsys):
+    # pylint: disable=unused-argument
+    """Test wait for ssh nodes to be available."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+    groups = _nodes_grouped(_ROOT_NODES)
+
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    # Simulating an authentication exception
     connect.side_effect = AuthenticationException()
 
     with raises(OpenA8SshAuthenticationException):
@@ -115,7 +129,30 @@ def test_open_a8_ssh_wait(connect, client, capsys):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait_failing(connect, client, capsys):
+def test_open_a8_ssh_wait_grenoble_failing(connect, client, capsys):
+    # pylint: disable=unused-argument
+    """Test wait for ssh nodes to be available."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+    groups = _nodes_grouped(_ROOT_NODES)
+
+    test_try_connection = (lambda node, site: (True if site == "saclay"
+                                               else False))
+    # all grenoble nodes failing
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    with patch.object(node_ssh, '_try_connection', new=test_try_connection):
+        ret = node_ssh.wait(4)  # 2 loops of 2 seconds required
+        assert ret['0'] == ['node-a8-{}.saclay.iot-lab.info'.format(idx)
+                            for idx in range(1, 6)]
+        assert ret['1'] == ['node-a8-{}.grenoble.iot-lab.info'.format(idx)
+                            for idx in range(1, 6)]
+
+
+@patch('pssh.SSHClient')
+@patch('pssh.SSHClient._connect_tunnel')
+def test_open_a8_ssh_wait_all_failing(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -133,3 +170,4 @@ def test_open_a8_ssh_wait_failing(connect, client, capsys):
     assert len(out.split('\n')) == len(_ROOT_NODES) + 1
 
     assert ret == {'1': _nodes_from_groups(groups)}
+    assert '0' not in ret.keys()
