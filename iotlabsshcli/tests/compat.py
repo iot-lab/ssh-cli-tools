@@ -29,14 +29,11 @@
 # flake8: noqa
 
 from sys import version_info
-if version_info[0] == 2:  # pragma: no cover
+if version_info[0] == 2:
     # python2
     import mock
-elif version_info[0:2] <= (3, 2):  # pragma: no cover
-    # python3.2
-    import mock
-elif version_info[0] == 3:  # pragma: no cover
-    # python3
+elif version_info[0] >= 3:
+    # python3 or later
     from unittest import mock
 else:  # pragma: no cover
     raise ValueError('Unknown python version %r' % version_info)
