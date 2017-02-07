@@ -24,7 +24,7 @@
 from iotlabsshcli.parser import open_a8_parser
 
 from .iotlabsshcli_mock import MainMock
-from .compat import patch
+from .compat import patch, Mock
 
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-few-public-methods
@@ -38,23 +38,34 @@ class TestMainNodeParser(MainMock):
 
     @patch('iotlabsshcli.open_a8.flash_m3')
     @patch('iotlabcli.parser.common.list_nodes')
-    def test_main_update_m3(self, list_nodes, update_m3):
+    def test_main_flash_m3(self, list_nodes, flash_m3):
         """Run the parser.node.main with update-m3 subparser function."""
 
-        update_m3.return_value = {'result': 'test'}
+        flash_m3.return_value = {'result': 'test'}
         list_nodes.return_value = self._nodes
 
         args = ['flash-m3', 'firmware.elf', '-l', 'saclay,a8,1-5']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        update_m3.assert_called_with({'user': 'username'}, self._root_nodes,
-                                     'firmware.elf', verbose=False)
+        flash_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                    'firmware.elf', verbose=False)
 
         args = ['flash-m3', 'firmware.elf']
         open_a8_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, None, None)
-        update_m3.assert_called_with({'user': 'username'}, self._root_nodes,
-                                     'firmware.elf', verbose=False)
+        flash_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                    'firmware.elf', verbose=False)
+
+        exp_info_res = {"items": [{"network_address": node}
+                                  for node in self._nodes]}
+        with patch.object(self.api, 'get_experiment_info',
+                          Mock(return_value=exp_info_res)):
+            list_nodes.return_value = []
+            args = ['flash-m3', 'firmware.elf']
+            open_a8_parser.main(args)
+            list_nodes.assert_called_with(self.api, 123, None, None)
+            flash_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                        'firmware.elf', verbose=False)
 
     @patch('iotlabsshcli.open_a8.reset_m3')
     @patch('iotlabcli.parser.common.list_nodes')
@@ -74,6 +85,17 @@ class TestMainNodeParser(MainMock):
         list_nodes.assert_called_with(self.api, 123, None, None)
         reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
                                     verbose=False)
+
+        exp_info_res = {"items": [{"network_address": node}
+                                  for node in self._nodes]}
+        with patch.object(self.api, 'get_experiment_info',
+                          Mock(return_value=exp_info_res)):
+            list_nodes.return_value = []
+            args = ['reset-m3']
+            open_a8_parser.main(args)
+            list_nodes.assert_called_with(self.api, 123, None, None)
+            reset_m3.assert_called_with({'user': 'username'}, self._root_nodes,
+                                        verbose=False)
 
     @patch('iotlabsshcli.open_a8.wait_for_boot')
     @patch('iotlabcli.parser.common.list_nodes')
@@ -98,13 +120,18 @@ class TestMainNodeParser(MainMock):
                                          max_wait=10,
                                          verbose=False)
 
-        args = ['wait-for-boot']
-        open_a8_parser.main(args)
-        list_nodes.assert_called_with(self.api, 123, None, None)
-        wait_for_boot.assert_called_with({'user': 'username'},
-                                         self._root_nodes,
-                                         max_wait=120,
-                                         verbose=False)
+        exp_info_res = {"items": [{"network_address": node}
+                                  for node in self._nodes]}
+        with patch.object(self.api, 'get_experiment_info',
+                          Mock(return_value=exp_info_res)):
+            list_nodes.return_value = []
+            args = ['wait-for-boot']
+            open_a8_parser.main(args)
+            list_nodes.assert_called_with(self.api, 123, None, None)
+            wait_for_boot.assert_called_with({'user': 'username'},
+                                             self._root_nodes,
+                                             max_wait=120,
+                                             verbose=False)
 
     def test_main_unknown_function(self):
         """Run the parser.node.main with an unknown function."""
