@@ -21,8 +21,8 @@
 
 """Tests for iotlabsshcli.open_a8 package."""
 
-from pytest import raises
 from pssh.exceptions import AuthenticationException, ConnectionErrorException
+from pytest import raises
 
 from iotlabsshcli.open_a8 import _nodes_grouped
 from iotlabsshcli.sshlib import OpenA8Ssh, OpenA8SshAuthenticationException
@@ -35,7 +35,9 @@ _ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
 
 
 @patch('pssh.ParallelSSHClient.run_command')
-def test_open_a8_ssh_run(run_command):
+@patch('pssh.ParallelSSHClient.join')
+def test_run(join, run_command):
+    # pylint: disable=unused-argument
     """Test running commands on ssh nodes."""
     config_ssh = {
         'user': 'username',
@@ -46,6 +48,13 @@ def test_open_a8_ssh_run(run_command):
     groups = _nodes_grouped(_ROOT_NODES)
 
     node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+
+    # Print output of run_command
+    run_command.return_value = dict(
+        (node.split('.', 1)[0],
+         {'stdout': ['test'], 'exit_code': 0})
+        for node in _ROOT_NODES)
+
     node_ssh.run(test_command)
 
     run_command.call_count = len(_ROOT_NODES)
@@ -61,7 +70,7 @@ def test_open_a8_ssh_run(run_command):
 @patch('scp.SCPClient.put')
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect')
-def test_open_a8_ssh_scp(connect, client, put, _open):
+def test_scp(connect, client, put, _open):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -88,7 +97,7 @@ def test_open_a8_ssh_scp(connect, client, put, _open):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait_all_success(connect, client, capsys):
+def test_wait_all_boot(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -110,7 +119,7 @@ def test_open_a8_ssh_wait_all_success(connect, client, capsys):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait_with_authentication_error(connect, client, capsys):
+def test_wait_authentication_exc(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -129,7 +138,7 @@ def test_open_a8_ssh_wait_with_authentication_error(connect, client, capsys):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait_grenoble_failing(connect, client, capsys):
+def test_wait_grenoble_not_boot(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
@@ -152,7 +161,7 @@ def test_open_a8_ssh_wait_grenoble_failing(connect, client, capsys):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_open_a8_ssh_wait_all_failing(connect, client, capsys):
+def test_wait_all_not_boot(connect, client, capsys):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
