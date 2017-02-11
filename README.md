@@ -1,5 +1,14 @@
 ## SSH CLI Tools
 
+[pypi-icon]: https://badge.fury.io/py/iotlabsshcli.svg
+[pypi-page]: https://badge.fury.io/py/iotlabsshcli
+[build-icon]: https://travis-ci.org/iot-lab/ssh-cli-tools.svg?branch=master
+[build-page]: https://travis-ci.org/iot-lab/ssh-cli-tools/branches
+[coverage-icon]: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master/graph/badge.svg
+[coverage-page]: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master
+
+[![PyPI version][pypi-icon]][pypi-page]  [![build][build-icon]][build-page]  [![codecov][coverage-icon]][coverage-page]
+
 SSH CLI Tools provides a set of commands for interacting remotely and easily
 with IoT-Lab Open A8 nodes. See [here](https://www.iot-lab.info/hardware/a8/)
 to get more information on this kind of node.
@@ -23,13 +32,6 @@ SSH CLI Tools can be used in conjunction with the
 `auth-cli` and `experiment-cli`.
 
 ### Installation:
-
-[build-icon]: https://travis-ci.org/iot-lab/ssh-cli-tools.svg?branch=master
-[build-page]: https://travis-ci.org/iot-lab/ssh-cli-tools/branches
-[coverage-icon]: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master/graph/badge.svg
-[coverage-page]: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master
-
-[![build][build-icon]][build-page]  [![codecov][coverage-icon]][coverage-page]
 
 You need python [pip](https://pip.pypa.io/en/stable/).
 Pip version >= 9.0 is known to work ; you may need to upgrade.
