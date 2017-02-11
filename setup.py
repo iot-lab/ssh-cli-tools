@@ -58,7 +58,7 @@ setup(
     download_url='http://github.com/iot-lab/ssh-cli-tools/',
     packages=find_packages(),
     scripts=SCRIPTS,
-    classifiers=['Development Status :: 3 - Beta',
+    classifiers=['Development Status :: 4 - Beta',
                  'Programming Language :: Python',
                  'Programming Language :: Python :: 2.7',
                  'Programming Language :: Python :: 3',
