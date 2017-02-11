@@ -34,16 +34,14 @@ SSH CLI Tools can be used in conjunction with the
 ### Installation:
 
 You need python [pip](https://pip.pypa.io/en/stable/).
+To do a system-wide install of the ssh-cli-tools use pip (or pip3 for
+Python 3):
+```
+$ sudo pip install iotlabsshcli
+```
+
 Pip version >= 9.0 is known to work ; you may need to upgrade.
 See INSTALLING.md for details on installation options.
-
-To do a system-wide install of the ssh-cli-tools,
-clone this repository and use pip (or pip3 for Python 3):
-```
-$ git clone https://github.com/iot-lab/ssh-cli-tools.git
-$ cd ssh-cli-tools
-$ sudo pip install .
-```
 
 ### Requirements:
 
@@ -199,15 +197,3 @@ $ open-a8-cli run-script /tmp/test.sh -l saclay,a8,2
     }
 }
 ```
-<b>Note:</b> a screen session is launched on the A8 node
-to actually run the script and provide easy access to outputs if needed.
-When the script ends, the screen session is terminated and the logs are gone.
-
-```
-root@node-a8-2:~# screen -ls
-There is a screen on:
-	1877.<login>-<exp_id>	(Detached)
-1 Socket in /tmp/screens/S-root.
-```
-<b>Note:</b> similar to run command you can pass --frontend option if you want to launch a script
-in background on the SSH frontend.
