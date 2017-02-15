@@ -195,7 +195,7 @@ class TestMainNodeParser(MainMock):
     @patch('iotlabsshcli.open_a8.copy_file')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_copy_file(self, list_nodes, copy_file):
-        """Run the parser.node.main with run-script subparser function."""
+        """Run the parser.node.main with copy-file subparser function."""
         copy_file.return_value = {'result': 'test'}
         list_nodes.return_value = self._nodes
 
