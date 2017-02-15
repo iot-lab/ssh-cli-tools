@@ -120,18 +120,13 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
 
 
 def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
-    """ Run a command on the A8 nodes or on the
-    SSH frontend
-    """
+    """ Run a command on the A8 nodes or on the SSH frontend. """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
     try:
-        if run_on_frontend:
-            result = ssh.run(cmd, with_proxy=False)
-        else:
-            result = ssh.run(cmd)
+        result = ssh.run(cmd, with_proxy=not run_on_frontend)
     except OpenA8SshAuthenticationException as exc:
         print(exc.msg)
         result = {"1": nodes}
@@ -195,15 +190,12 @@ def run_script(config_ssh, nodes, script, run_on_frontend=False,
         ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script),
                 with_proxy=with_proxy)
 
-        if not run_on_frontend:
-            with_proxy = True
-
         # Kill any running script
         ssh.run(_QUIT_SCRIPT_CMD.format(**script_data),
-                with_proxy=with_proxy)
+                with_proxy=not run_on_frontend)
 
         # Run script
         result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
-                         with_proxy=with_proxy, use_pty=False)
+                         with_proxy=not run_on_frontend, use_pty=False)
 
     return {"run-script": result}

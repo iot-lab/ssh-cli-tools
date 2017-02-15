@@ -186,13 +186,11 @@ class OpenA8Ssh(object):
             raise OpenA8SshAuthenticationException(site)
         except ConnectionErrorException:
             if self.verbose:
-                print("Node {} not ready."
-                      .format(node))
+                print("Node {} not ready.".format(node))
         else:
             client.client.close()
             if self.verbose:
-                print("Node {} ready."
-                      .format(node))
+                print("Node {} ready.".format(node))
             result = True
         finally:
             dev_null.close()
