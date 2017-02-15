@@ -66,6 +66,38 @@ def test_run(join, run_command):
         node_ssh.run(test_command)
 
 
+@patch('pssh.ParallelSSHClient.run_command')
+@patch('pssh.ParallelSSHClient.join')
+def test_run_on_frontend(join, run_command):
+    # pylint: disable=unused-argument
+    """Test running commands on ssh nodes."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+
+    test_command = 'test'
+    groups = _nodes_grouped(_ROOT_NODES)
+
+    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+
+    # Print output of run_command
+    run_command.return_value = dict(
+        ("{}.iot-lab.info".format(site),
+         {'stdout': ['test'], 'exit_code': 0})
+        for site in ["saclay", "grenoble"])
+
+    node_ssh.run(test_command, with_proxy=False)
+
+    run_command.call_count = len(_ROOT_NODES)
+    run_command.assert_called_with(test_command)
+
+    # Raise an exception
+    run_command.side_effect = AuthenticationException()
+    with raises(OpenA8SshAuthenticationException):
+        node_ssh.run(test_command)
+
+
 @patch('scp.SCPClient._open')
 @patch('scp.SCPClient.put')
 @patch('pssh.SSHClient')

@@ -182,10 +182,30 @@ def test_open_a8_run_cmd(run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, False)
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=False)
     assert ret == {'run-cmd': return_value}
 
     # Raise an exception
     run.side_effect = OpenA8SshAuthenticationException('test')
     ret = run_cmd(config_ssh, _ROOT_NODES, cmd, False)
+    assert ret == {'run-cmd': {'1': _ROOT_NODES}}
+
+
+@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
+def test_open_a8_run_cmd_frontend(run):
+    """Test run command on frontend."""
+    config_ssh = {
+        'user': 'username',
+        'exp_id': 123,
+    }
+    cmd = 'uname -a'
+    return_value = {'0': 'test'}
+    run.return_value = return_value
+
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=True)
+    assert ret == {'run-cmd': return_value}
+
+    # Raise an exception
+    run.side_effect = OpenA8SshAuthenticationException('test')
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, True)
     assert ret == {'run-cmd': {'1': _ROOT_NODES}}
