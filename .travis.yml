@@ -3,26 +3,19 @@ language: python
 matrix:
     include:
         - python: 2.7
-          env:
-            - TOX_ENV="py27-tests,py27-lint,cli"
-            - COVERAGE="true"
+          env: TOXENV="py27-tests,py27-lint,cli,coverage"
         - python: 3.4
-          env: TOX_ENV="py34-tests,cli"
+          env: TOXENV="py34-tests,cli"
         - python: 3.5
-          env:
-            - TOX_ENV="copying,py35-tests,py35-lint,cli"
-            - COVERAGE="true"
+          env: TOXENV="copying,py35-tests,py35-lint,cli,coverage"
         - python: 3.6
-          env: TOX_ENV="py36-tests,cli"
+          env: TOXENV="py36-tests,cli"
 
 before_install:
-    - pip install tox codecov
+    - pip install tox
 
 install:
     - pip install .
 
 script:
-    - tox -e ${TOX_ENV}
-
-after_success:
-    - if [ ! -z ${COVERAGE+x} ]; then echo "Running codecov" && codecov; fi
+    - tox
