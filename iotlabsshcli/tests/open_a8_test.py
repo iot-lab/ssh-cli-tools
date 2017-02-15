@@ -182,7 +182,7 @@ def test_open_a8_run_cmd(run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, False)
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=False)
     assert ret == {'run-cmd': return_value}
 
     # Raise an exception
@@ -202,7 +202,7 @@ def test_open_a8_run_cmd_frontend(run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, True)
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=True)
     assert ret == {'run-cmd': return_value}
 
     # Raise an exception
