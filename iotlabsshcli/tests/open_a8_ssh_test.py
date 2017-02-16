@@ -29,9 +29,8 @@ from iotlabsshcli.sshlib import OpenA8Ssh, OpenA8SshAuthenticationException
 from iotlabsshcli.sshlib.open_a8_ssh import _nodes_from_groups
 from .compat import patch
 
-_SITES = ['saclay', 'grenoble']
 _NODES = ['a8-{}.{}.iot-lab.info'.format(n, s)
-          for n in range(1, 6) for s in _SITES]
+          for n in range(1, 6) for s in ['saclay', 'grenoble']]
 _ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
 
 
@@ -86,7 +85,7 @@ def test_run_on_frontend(join, run_command):
     run_command.return_value = dict(
         ("{}.iot-lab.info".format(site),
          {'stdout': ['test'], 'exit_code': 0})
-        for site in _SITES)
+        for site in ["saclay", "grenoble"])
 
     node_ssh.run(test_command, with_proxy=False)
 
