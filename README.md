@@ -42,7 +42,6 @@ $ git clone https://github.com/iot-lab/ssh-cli-tools.git
 $ cd ssh-cli-tools
 $ sudo pip install .
 ```
-### Requirement:
 
 ### Requirements:
 
@@ -54,7 +53,7 @@ to configure your IoT-LAB SSH access in this
 
 ### Examples:
 
-#### Start an experiment, wait for it ot be ready, wait for all A8 boot:
+#### Start an experiment, wait for it to be ready, wait for all A8 boot:
 ```
 $ experiment-cli submit -d 120 -l saclay,a8,1-10
 {
@@ -208,5 +207,5 @@ There is a screen on:
 	1877.<login>-<exp_id>	(Detached)
 1 Socket in /tmp/screens/S-root.
 ```
-<b>Note:</b> as run command you can pass --frontend option if you want to launch a script
+<b>Note:</b> similar to run command you can pass --frontend option if you want to launch a script
 in background on the SSH frontend.
