@@ -153,7 +153,7 @@ Connecting via SSH proxy saclay.iot-lab.info:22 -> node-a8-2.saclay.iot-lab.info
     }
 }
 ```
-#### Run a command on SSH frontend: 
+#### Run a command on SSH frontend:
 ```
 $ open-a8-cli --verbose run-cmd "uname -a" --frontend
 [saclay.iot-lab.info]	Linux saclay 3.16.0-4-amd64 #1 SMP Debian 3.16.36-1+deb8u1 (2016-09-03) x86_64 GNU/Linux
@@ -167,7 +167,7 @@ $ open-a8-cli --verbose run-cmd "uname -a" --frontend
 ```
 #### Copy file on SSH frontend homedir directory (~/A8/.iotlabsshcli):
 ```
-$ open-a8-cli copy-file test.tar.gz 
+$ open-a8-cli copy-file test.tar.gz
 {
     "run-cmd": {
         "0": [
@@ -197,3 +197,16 @@ $ open-a8-cli run-script /tmp/test.sh -l saclay,a8,2
     }
 }
 ```
+
+<b>Note:</b> a screen session is launched on the A8 node
+to actually run the script and provide easy access to outputs if needed.
+When the script ends, the screen session is terminated and the logs are gone.
+
+```
+root@node-a8-2:~# screen -ls
+There is a screen on:
+	1877.<login>-<exp_id>	(Detached)
+1 Socket in /tmp/screens/S-root.
+```
+<b>Note:</b> similar to run command you can pass the `--frontend` option if
+you want to launch a script in background on the SSH frontend.
