@@ -64,8 +64,7 @@ def test_run(join, run_command, run_on_frontend):
             for node in _ROOT_NODES)
 
     node_ssh.run(test_command, with_proxy=not run_on_frontend)
-
-    run_command.call_count = len(_ROOT_NODES)
+    assert run_command.call_count == len(groups)
     run_command.assert_called_with(test_command)
 
     # Raise an exception
