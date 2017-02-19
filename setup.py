@@ -28,6 +28,11 @@ PACKAGE = 'iotlabsshcli'
 LICENSE = 'CeCILL v2.1'
 
 
+def readme(fname):
+    """Utility function to read the README. Used for long description."""
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+
 def get_version(package):
     """ Extract package version without importing file
     Importing cause issues with coverage,
@@ -51,6 +56,7 @@ setup(
     name=PACKAGE,
     version=get_version(PACKAGE),
     description='IoT-LAB testbed ssh command-line client',
+    long_description=readme('README.md'),
     author='IoT-LAB Team',
     author_email='admin@iot-lab.info',
     url='http://www.iot-lab.info',
