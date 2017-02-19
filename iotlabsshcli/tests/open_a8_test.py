@@ -22,6 +22,7 @@
 """Tests for iotlabsshcli.open_a8 package."""
 
 import os.path
+from pytest import mark
 from iotlabsshcli.open_a8 import reset_m3, flash_m3, wait_for_boot, run_script
 from iotlabsshcli.open_a8 import run_cmd, copy_file
 from iotlabsshcli.open_a8 import (_RESET_M3_CMD, _UPDATE_M3_CMD,
@@ -105,9 +106,10 @@ def test_open_a8_wait_for_boot(wait):
     assert ret == {'wait-for-boot': {'1': _ROOT_NODES}}
 
 
+@mark.parametrize('run_on_frontend', [False, True])
 @patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
 @patch('iotlabsshcli.sshlib.OpenA8Ssh.scp')
-def test_open_a8_run_script(scp, run):
+def test_open_a8_run_script(scp, run, run_on_frontend):
     """Test run script on A8 nodes."""
     config_ssh = {
         'user': 'username',
@@ -122,20 +124,26 @@ def test_open_a8_run_script(scp, run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = run_script(config_ssh, _ROOT_NODES, script)
+    ret = run_script(config_ssh, _ROOT_NODES, script,
+                     run_on_frontend=run_on_frontend)
 
     assert ret == {'run-script': return_value}
     scp.assert_called_once_with(script, remote_script)
     assert run.call_count == 4
 
     run.mock_calls[0].assert_called_with(
-        _MKDIR_DST_CMD.format(os.path.dirname(remote_script)))
+        _MKDIR_DST_CMD.format(os.path.dirname(remote_script)),
+        with_proxy=False)
     run.mock_calls[1].assert_called_with(
-        _MAKE_EXECUTABLE_CMD.format(os.path.dirname(remote_script)))
+        _MAKE_EXECUTABLE_CMD.format(os.path.dirname(remote_script)),
+        with_proxy=False)
     run.mock_calls[2].assert_called_with(
-        _QUIT_SCRIPT_CMD.format(**script_data))
-    run.mock_calls[3].assert_called_with(_RUN_SCRIPT_CMD.format(**script_data),
-                                         use_pty=False)
+        _QUIT_SCRIPT_CMD.format(**script_data),
+        with_proxy=not run_on_frontend)
+    run.mock_calls[3].assert_called_with(
+        _RUN_SCRIPT_CMD.format(**script_data),
+        use_pty=False,
+        with_proxy=not run_on_frontend)
 
     # Raise an exception
     run.side_effect = OpenA8SshAuthenticationException('test')
@@ -158,12 +166,11 @@ def test_open_a8_copy_file(scp, run):
     scp.return_value = return_value
 
     ret = copy_file(config_ssh, _ROOT_NODES, file_path)
-
     assert ret == {'copy-file': return_value}
+
     scp.assert_called_once_with(file_path, remote_file)
-    assert run.call_count == 1
-    run.mock_calls[0].assert_called_with(
-        _MKDIR_DST_CMD.format(os.path.dirname(remote_file)))
+    run.assert_called_once_with(
+        _MKDIR_DST_CMD.format(os.path.dirname(remote_file)), with_proxy=False)
 
     # Raise an exception
     run.side_effect = OpenA8SshAuthenticationException('test')
@@ -171,8 +178,9 @@ def test_open_a8_copy_file(scp, run):
     assert ret == {'copy-file': {'1': _ROOT_NODES}}
 
 
+@mark.parametrize('run_on_frontend', [False, True])
 @patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-def test_open_a8_run_cmd(run):
+def test_open_a8_run_cmd(run, run_on_frontend):
     """Test run command on A8 nodes."""
     config_ssh = {
         'user': 'username',
@@ -182,30 +190,12 @@ def test_open_a8_run_cmd(run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=False)
+    ret = run_cmd(config_ssh, _ROOT_NODES, cmd,
+                  run_on_frontend=run_on_frontend)
+    run.assert_called_once_with(cmd, with_proxy=not run_on_frontend)
     assert ret == {'run-cmd': return_value}
 
     # Raise an exception
     run.side_effect = OpenA8SshAuthenticationException('test')
     ret = run_cmd(config_ssh, _ROOT_NODES, cmd, False)
-    assert ret == {'run-cmd': {'1': _ROOT_NODES}}
-
-
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-def test_open_a8_run_cmd_frontend(run):
-    """Test run command on frontend."""
-    config_ssh = {
-        'user': 'username',
-        'exp_id': 123,
-    }
-    cmd = 'uname -a'
-    return_value = {'0': 'test'}
-    run.return_value = return_value
-
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, run_on_frontend=True)
-    assert ret == {'run-cmd': return_value}
-
-    # Raise an exception
-    run.side_effect = OpenA8SshAuthenticationException('test')
-    ret = run_cmd(config_ssh, _ROOT_NODES, cmd, True)
     assert ret == {'run-cmd': {'1': _ROOT_NODES}}

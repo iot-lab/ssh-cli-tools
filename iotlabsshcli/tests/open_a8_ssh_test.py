@@ -22,7 +22,7 @@
 """Tests for iotlabsshcli.open_a8 package."""
 
 from pssh.exceptions import AuthenticationException, ConnectionErrorException
-from pytest import raises
+from pytest import raises, mark
 
 from iotlabsshcli.open_a8 import _nodes_grouped
 from iotlabsshcli.sshlib import OpenA8Ssh, OpenA8SshAuthenticationException
@@ -35,9 +35,10 @@ _NODES = ['a8-{}.{}.iot-lab.info'.format(n, s)
 _ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
 
 
+@mark.parametrize('run_on_frontend', [False, True])
 @patch('pssh.ParallelSSHClient.run_command')
 @patch('pssh.ParallelSSHClient.join')
-def test_run(join, run_command):
+def test_run(join, run_command, run_on_frontend):
     # pylint: disable=unused-argument
     """Test running commands on ssh nodes."""
     config_ssh = {
@@ -51,44 +52,18 @@ def test_run(join, run_command):
     node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
 
     # Print output of run_command
-    run_command.return_value = dict(
-        (node,
-         {'stdout': ['test'], 'exit_code': 0})
-        for node in _ROOT_NODES)
+    if run_on_frontend:
+        run_command.return_value = dict(
+            ("{}.iot-lab.info".format(site),
+             {'stdout': ['test'], 'exit_code': 0})
+            for site in _SITES)
+    else:
+        run_command.return_value = dict(
+            (node,
+             {'stdout': ['test'], 'exit_code': 0})
+            for node in _ROOT_NODES)
 
-    node_ssh.run(test_command)
-
-    run_command.call_count = len(_ROOT_NODES)
-    run_command.assert_called_with(test_command)
-
-    # Raise an exception
-    run_command.side_effect = AuthenticationException()
-    with raises(OpenA8SshAuthenticationException):
-        node_ssh.run(test_command)
-
-
-@patch('pssh.ParallelSSHClient.run_command')
-@patch('pssh.ParallelSSHClient.join')
-def test_run_on_frontend(join, run_command):
-    # pylint: disable=unused-argument
-    """Test running commands on ssh nodes."""
-    config_ssh = {
-        'user': 'username',
-        'exp_id': 123,
-    }
-
-    test_command = 'test'
-    groups = _nodes_grouped(_ROOT_NODES)
-
-    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
-
-    # Print output of run_command
-    run_command.return_value = dict(
-        ("{}.iot-lab.info".format(site),
-         {'stdout': ['test'], 'exit_code': 0})
-        for site in _SITES)
-
-    node_ssh.run(test_command, with_proxy=False)
+    node_ssh.run(test_command, with_proxy=not run_on_frontend)
 
     run_command.call_count = len(_ROOT_NODES)
     run_command.assert_called_with(test_command)
@@ -171,7 +146,7 @@ def test_wait_authentication_exc(connect, client, capsys):
 
 @patch('pssh.SSHClient')
 @patch('pssh.SSHClient._connect_tunnel')
-def test_wait_grenoble_not_boot(connect, client, capsys):
+def test_wait_grenoble_not_boot(connect, client):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
