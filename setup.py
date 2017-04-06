@@ -56,7 +56,7 @@ setup(
     name=PACKAGE,
     version=get_version(PACKAGE),
     description='IoT-LAB testbed ssh command-line client',
-    long_description=readme('README.md'),
+    long_description=readme('README.rst'),
     author='IoT-LAB Team',
     author_email='admin@iot-lab.info',
     url='http://www.iot-lab.info',
