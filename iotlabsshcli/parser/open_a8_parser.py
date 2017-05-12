@@ -46,6 +46,7 @@ def parse_options():
 
     # update-m3 parser
     update_parser = subparsers.add_parser('flash-m3',
+                                          parents=[parent_parser],
                                           help='Flash the M3 firmware of A8 '
                                                'nodes')
     update_parser.add_argument('firmware', help='firmware elf path.')
@@ -54,12 +55,14 @@ def parse_options():
 
     # reset-m3 parser
     reset_parser = subparsers.add_parser('reset-m3',
+                                         parents=[parent_parser],
                                          help='Reset the M3 of A8 nodes')
     # nodes list or exclude list
     common.add_nodes_selection_list(reset_parser)
 
     # wait-for-boot parser
     boot_parser = subparsers.add_parser('wait-for-boot',
+                                        parents=[parent_parser],
                                         help='Waits until A8 nodes have boot')
     boot_parser.add_argument('--max-wait',
                              type=int,
@@ -71,6 +74,7 @@ def parse_options():
 
     # run-script parser
     run_script_parser = subparsers.add_parser('run-script',
+                                              parents=[parent_parser],
                                               help='Run a script in background'
                                                    ' on A8 nodes')
     run_script_parser.add_argument('script', help='script path.')
@@ -81,6 +85,7 @@ def parse_options():
 
     # run-cmd parser
     run_cmd_parser = subparsers.add_parser('run-cmd',
+                                           parents=[parent_parser],
                                            help='Run a command on A8 nodes')
     run_cmd_parser.add_argument('cmd', help='Command')
     run_cmd_parser.add_argument('--frontend', action='store_true',
@@ -90,6 +95,7 @@ def parse_options():
 
     # copy-file parser
     copy_file_parser = subparsers.add_parser('copy-file',
+                                             parents=[parent_parser],
                                              help='Copy file on'
                                                   ' SSH frontend directory'
                                                   ' (~/A8/.iotlabsshcli/)')
