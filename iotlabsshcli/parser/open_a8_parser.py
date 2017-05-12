@@ -33,7 +33,13 @@ import iotlabsshcli.open_a8
 
 def parse_options():
     """Parse command line option."""
-    parent_parser = common.base_parser()
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    common.add_auth_arguments(parent_parser, False)
+    common.add_output_formatter(parent_parser)
+    parent_parser.add_argument('-v', '--version',
+                               action='version',
+                               version=iotlabsshcli.__version__)
+
     # We create top level parser
     parser = argparse.ArgumentParser(
         parents=[parent_parser],
