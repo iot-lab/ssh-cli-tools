@@ -23,7 +23,8 @@
 
 from __future__ import print_function
 import time
-from pssh import ParallelSSHClient, SSHClient, utils
+from pssh.pssh_client import ParallelSSHClient, SSHClient
+from pssh import utils
 from pssh.exceptions import AuthenticationException, ConnectionErrorException
 from scp import SCPClient
 
