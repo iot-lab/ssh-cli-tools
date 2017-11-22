@@ -47,7 +47,10 @@ def get_version(package):
                 return eval(line.split('=')[-1])  # pylint:disable=eval-used
 
 
-SCRIPTS = ['open-a8-cli']
+SCRIPTS = ['iotlab-ssh']
+DEPRECATED_SCRIPTS = ['open-a8-cli']
+
+SCRIPTS += DEPRECATED_SCRIPTS
 
 INSTALL_REQUIRES = ['argparse', 'iotlabcli>=2.0', 'parallel-ssh>=1.2.0',
                     'scp>=0.10', 'gevent<=1.1']

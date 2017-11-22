@@ -20,7 +20,4 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 import iotlabsshcli.parser.open_a8_parser
-from iotlabcli.helpers import deprecate_cmd
-
-deprecate_cmd(iotlabsshcli.parser.open_a8_parser.main,
-              "open-a8-cli", "iotlab-ssh")
+iotlabsshcli.parser.open_a8_parser.main()
