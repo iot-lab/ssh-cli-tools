@@ -9,7 +9,7 @@ with IoT-Lab Open A8 nodes. See `here <https://www.iot-lab.info/hardware/a8/>`_
 to get more information on this kind of node.
 
 All available actions provided by **SSH CLI Tools** are available as sub-commands
-of `open-a8-cli`.
+of `iotlab-ssh`.
 
 The provided sub-commands are:
 
@@ -57,14 +57,14 @@ Start an experiment, wait for it to be ready, wait for all A8 boot:
 
 .. code-block::
 
-    $ experiment-cli submit -d 120 -l saclay,a8,1-10
+    $ iotlab-experiment submit -d 120 -l saclay,a8,1-10
     {
         "id": 65535
     }
-    $ experiment-cli wait
+    $ iotlab-experiment wait
     Waiting that experiment 65535 gets in state Running
     "Running"
-    $ open-a8-cli wait-for-boot
+    $ iotlab-ssh wait-for-boot
     {
         "wait-for-boot": {
             "0": [
@@ -91,7 +91,7 @@ Flash a firmware on the M3 of the working node:
 
 .. code-block::
 
-    $ open-a8-cli flash-m3 <firmware.elf> -l saclay,a8,2-3+5-7+9-10
+    $ iotlab-ssh flash-m3 <firmware.elf> -l saclay,a8,2-3+5-7+9-10
     {
         "flash-m3": {
             "0": [
@@ -111,7 +111,7 @@ Reset the M3 of one A8 node:
 
 .. code-block::
 
-    $ open-a8-cli reset-m3 -l saclay,a8,2
+    $ iotlab-ssh reset-m3 -l saclay,a8,2
     {
         "reset-m3": {
             "0": [
@@ -125,7 +125,7 @@ Use the *--verbose* option to get the commands output:
 
 .. code-block::
 
-    $ open-a8-cli --verbose reset-m3 -l saclay,a8,2
+    $ iotlab-ssh --verbose reset-m3 -l saclay,a8,2
     Connecting via SSH proxy saclay.iot-lab.info:22 -> node-a8-2.saclay.iot-lab.info:22
     [node-a8-2.saclay.iot-lab.info]	Open On-Chip Debugger 0.9.0-dirty (2016-04-15-00:55)
     [node-a8-2.saclay.iot-lab.info]	Licensed under GNU GPL v2
@@ -153,7 +153,7 @@ Run a command on two A8 nodes:
 
 .. code-block::
 
-    $ open-a8-cli --verbose run-cmd "uname -a" -l saclay,a8,2-3
+    $ iotlab-ssh --verbose run-cmd "uname -a" -l saclay,a8,2-3
     Connecting via SSH proxy saclay.iot-lab.info:22 -> node-a8-2.saclay.iot-lab.info:22
     [node-a8-2.saclay.iot-lab.info]	Linux node-a8-2 3.18.5-iotlab+ #9 Thu Sep 1 16:17:22 CEST 2016 armv7l GNU/Linux
     [node-a8-3.saclay.iot-lab.info]	Linux node-a8-3 3.18.5-iotlab+ #9 Thu Sep 1 16:17:22 CEST 2016 armv7l GNU/Linux
@@ -171,7 +171,7 @@ Run a command on SSH frontend:
 
 .. code-block::
 
-    $ open-a8-cli --verbose run-cmd "uname -a" --frontend
+    $ iotlab-ssh --verbose run-cmd "uname -a" --frontend
     [saclay.iot-lab.info]	Linux saclay 3.16.0-4-amd64 #1 SMP Debian 3.16.36-1+deb8u1 (2016-09-03) x86_64 GNU/Linux
     {
         "run-cmd": {
@@ -186,7 +186,7 @@ Copy file on SSH frontend homedir directory (~/A8/.iotlabsshcli):
 
 .. code-block::
 
-    $ open-a8-cli copy-file test.tar.gz
+    $ iotlab-ssh copy-file test.tar.gz
     {
         "run-cmd": {
             "0": [
@@ -210,7 +210,7 @@ Run the script `/tmp/test.sh` on `node-a8-2` in saclay:
 
 .. code-block::
 
-    $ open-a8-cli run-script /tmp/test.sh -l saclay,a8,2
+    $ iotlab-ssh run-script /tmp/test.sh -l saclay,a8,2
     {
         "run-script": {
             "0": [

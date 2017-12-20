@@ -17,7 +17,7 @@ we recommend using a virtualenv
 	cd ssh-cli-tools/
 	pip install pip --upgrade
 	pip install .
-	open-a8-cli
+	iotlab-ssh --help
 
 
 Installing on your dev PC
@@ -37,7 +37,7 @@ you will need python-dev
 	git clone git@github.com:iot-lab/ssh-cli-tools.git
 	cd ssh-cli-tools/
 	pip install .
-	open-a8-cli
+	iotlab-ssh --help
 
 
 Installing / upgrading pip / pip3
