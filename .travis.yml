@@ -12,6 +12,7 @@ matrix:
           env: TOXENV="py36-tests,cli"
 
 before_install:
+    - sudo apt-get install libssh2-1-dev -y
     - pip install tox
 
 install:
