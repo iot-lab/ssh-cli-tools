@@ -26,7 +26,7 @@ The provided sub-commands are:
 
 **SSH CLI Tools** can be used in conjunction with the
 `IoT-Lab CLI Tools <https://github.com/iot-lab/cli-tools>`_ commands like
-`auth-cli` and `experiment-cli`.
+`iotlab-auth` and `iotlab-experiment`.
 
 Installation:
 -------------
