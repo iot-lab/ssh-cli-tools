@@ -35,7 +35,6 @@ def parse_options():
     """Parse command line option."""
     parent_parser = argparse.ArgumentParser(add_help=False)
     common.add_auth_arguments(parent_parser, False)
-    common.add_output_formatter(parent_parser)
     parent_parser.add_argument('-v', '--version',
                                action='version',
                                version=iotlabsshcli.__version__)
@@ -46,6 +45,7 @@ def parse_options():
     )
 
     common.add_expid_arg(parser)
+    common.add_output_formatter(parser)
 
     subparsers = parser.add_subparsers(dest='command')
     subparsers.required = True  # needed for python 3.
