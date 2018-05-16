@@ -21,6 +21,8 @@
 
 """Tests for iotlabsshcli.parser.open_a8 package."""
 
+import jmespath
+
 from iotlabsshcli.parser import open_a8_parser
 
 from .iotlabsshcli_mock import MainMock
@@ -229,3 +231,31 @@ class TestMainNodeParser(MainMock):
         parser = open_a8_parser.parse_options()
         self.assertRaises(TypeError, open_a8_parser.open_a8_parse_and_run,
                           parser, args)
+
+    @patch('iotlabsshcli.open_a8.reset_m3')
+    @patch('iotlabcli.parser.common.list_nodes')
+    @patch('iotlabcli.parser.common.print_result')
+    def test_reset_m3_jmespath(self, print_result, list_nodes, reset_m3):
+        """Run reset-m3 subparser function with jmespath options."""
+        reset_m3.return_value = {'result': 'test'}
+        list_nodes.return_value = self._nodes
+
+        args = ['--jmespath=\'test\'', '--fmt=\'int\'', 'reset-m3',
+                '-l', 'saclay,a8,1-5']
+        open_a8_parser.main(args)
+
+        print_result.assert_called_once()
+        args, _ = print_result.call_args
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[0], {'result': 'test'})
+        self.assertTrue(isinstance(args[1], jmespath.parser.ParsedResult))
+        self.assertEqual(args[2], 'int')
+
+        args = ['reset-m3', '-l', 'saclay,a8,1-5']
+        open_a8_parser.main(args)
+        print_result.assert_called_once()
+        args, _ = print_result.call_args
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[0], {'result': 'test'})
+        self.assertEqual(args[1], None)
+        self.assertEqual(args[2], None)
