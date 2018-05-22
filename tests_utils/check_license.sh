@@ -18,6 +18,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e 'ssh_config' \
     -e '.travis.yml' \
     -e 'codecov.yml' \
+    -e 'utils/iotlabsshcli-bash-completion.sh' \
 )
 
 # Verify that 'AUTHORS' and 'COPYING' files exist
