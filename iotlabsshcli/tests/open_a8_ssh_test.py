@@ -35,8 +35,8 @@ _ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
 
 
 @mark.parametrize('run_on_frontend', [False, True])
-@patch('pssh.pssh_client.ParallelSSHClient.run_command')
-@patch('pssh.pssh_client.ParallelSSHClient.join')
+@patch('pssh.clients.native.ParallelSSHClient.run_command')
+@patch('pssh.clients.native.ParallelSSHClient.join')
 def test_run(join, run_command, run_on_frontend):
     # pylint: disable=unused-argument
     """Test running commands on ssh nodes."""
@@ -69,8 +69,8 @@ def test_run(join, run_command, run_on_frontend):
 
 @patch('scp.SCPClient._open')
 @patch('scp.SCPClient.put')
-@patch('pssh.pssh_client.SSHClient')
-@patch('pssh.pssh_client.SSHClient._connect')
+@patch('pssh.clients.miko.SSHClient')
+@patch('pssh.clients.miko.SSHClient._connect')
 def test_scp(connect, client, put, _open):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
@@ -102,8 +102,8 @@ def test_scp(connect, client, put, _open):
         node_ssh.scp(src, dst)
 
 
-@patch('pssh.pssh_client.ParallelSSHClient.run_command')
-@patch('pssh.pssh_client.ParallelSSHClient.join')
+@patch('pssh.clients.native.ParallelSSHClient.run_command')
+@patch('pssh.clients.native.ParallelSSHClient.join')
 def test_wait_all_boot(join, run_command):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
@@ -134,8 +134,8 @@ def test_wait_all_boot(join, run_command):
     run_command.assert_called_with(test_command, stop_on_errors=False)
 
 
-@patch('pssh.pssh_client.ParallelSSHClient.run_command')
-@patch('pssh.pssh_client.ParallelSSHClient.join')
+@patch('pssh.clients.native.ParallelSSHClient.run_command')
+@patch('pssh.clients.native.ParallelSSHClient.join')
 def test_authentication_exception(join, run_command):
     # pylint: disable=unused-argument
     """Test SSH authentication exception with parallel-ssh
