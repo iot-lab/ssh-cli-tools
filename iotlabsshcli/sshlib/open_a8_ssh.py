@@ -130,7 +130,7 @@ class OpenA8SshAuthenticationException(Exception):
         self.msg = msg
 
 
-class OpenA8Ssh(object):
+class OpenA8Ssh():
     """Implement SshAPI for Parallel SSH."""
 
     def __init__(self, config_ssh, groups, verbose=False):
