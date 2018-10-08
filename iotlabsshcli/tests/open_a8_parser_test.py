@@ -225,12 +225,19 @@ class TestMainNodeParser(MainMock):
         args = ['unknown-cmd']
         self.assertRaises(SystemExit, open_a8_parser.main, args)
 
-    def test_run_unknown_function(self):
+    @patch('iotlabcli.parser.common.list_nodes')
+    def test_run_unknown_function(self, list_nodes):
+        # pylint:disable=unused-argument
         """Run the parser.node.main with an unknown function."""
-        args = ['unknown-cmd']
         parser = open_a8_parser.parse_options()
-        self.assertRaises(TypeError, open_a8_parser.open_a8_parse_and_run,
-                          parser, args)
+        parser.command = 'unknown-cmd'
+        parser.username = 'username'
+        parser.password = 'password'
+        parser.experiment_id = 'experiment_id'
+        parser.nodes_list = []
+        parser.exclude_nodes_list = []
+        self.assertRaises(ValueError,
+                          open_a8_parser.open_a8_parse_and_run, parser)
 
     @patch('iotlabsshcli.open_a8.reset_m3')
     @patch('iotlabcli.parser.common.list_nodes')
