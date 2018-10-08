@@ -139,32 +139,36 @@ def open_a8_parse_and_run(opts):
              for node in nodes if node.startswith('a8')]
 
     command = opts.command
+    res = None
     if command == 'reset-m3':
-        return iotlabsshcli.open_a8.reset_m3(config_ssh, nodes,
-                                             verbose=opts.verbose)
-    elif command == 'flash-m3':
-        return iotlabsshcli.open_a8.flash_m3(config_ssh, nodes, opts.firmware,
-                                             verbose=opts.verbose)
-    elif command == 'wait-for-boot':
-        return iotlabsshcli.open_a8.wait_for_boot(config_ssh, nodes,
-                                                  max_wait=opts.max_wait,
-                                                  verbose=opts.verbose)
-    elif command == 'run-script':
-        return iotlabsshcli.open_a8.run_script(config_ssh, nodes,
-                                               opts.script,
-                                               opts.frontend,
-                                               verbose=opts.verbose)
-    elif command == 'run-cmd':
-        return iotlabsshcli.open_a8.run_cmd(config_ssh, nodes,
-                                            opts.cmd,
-                                            opts.frontend,
+        res = iotlabsshcli.open_a8.reset_m3(config_ssh, nodes,
                                             verbose=opts.verbose)
-    elif command == 'copy-file':
-        return iotlabsshcli.open_a8.copy_file(config_ssh, nodes,
-                                              opts.file_path,
+    elif command == 'flash-m3':
+        res = iotlabsshcli.open_a8.flash_m3(config_ssh, nodes, opts.firmware,
+                                            verbose=opts.verbose)
+    elif command == 'wait-for-boot':
+        res = iotlabsshcli.open_a8.wait_for_boot(config_ssh, nodes,
+                                                 max_wait=opts.max_wait,
+                                                 verbose=opts.verbose)
+    elif command == 'run-script':
+        res = iotlabsshcli.open_a8.run_script(config_ssh, nodes,
+                                              opts.script,
+                                              opts.frontend,
                                               verbose=opts.verbose)
-    else:  # pragma: no cover
+    elif command == 'run-cmd':
+        res = iotlabsshcli.open_a8.run_cmd(config_ssh, nodes,
+                                           opts.cmd,
+                                           opts.frontend,
+                                           verbose=opts.verbose)
+    elif command == 'copy-file':
+        res = iotlabsshcli.open_a8.copy_file(config_ssh, nodes,
+                                             opts.file_path,
+                                             verbose=opts.verbose)
+
+    if res is None:
         raise ValueError('Unknown command {0}'.format(command))
+
+    return res
 
 
 def main(args=None):
