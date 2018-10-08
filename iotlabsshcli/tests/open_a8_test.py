@@ -23,6 +23,7 @@
 
 import os.path
 from pytest import mark
+
 from iotlabsshcli.open_a8 import reset_m3, flash_m3, wait_for_boot, run_script
 from iotlabsshcli.open_a8 import run_cmd, copy_file
 from iotlabsshcli.open_a8 import (_RESET_M3_CMD, _UPDATE_M3_CMD,
