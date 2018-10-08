@@ -23,8 +23,9 @@
 
 from __future__ import print_function
 import time
-from pssh.clients.native import ParallelSSHClient
-from pssh.clients.miko import SSHClient
+import paramiko
+from paramiko import SSHClient
+from pssh.clients import ParallelSSHClient
 from pssh import utils
 from pssh.exceptions import AuthenticationException, ConnectionErrorException
 from scp import SCPClient
@@ -158,20 +159,23 @@ class OpenA8Ssh():
         return _cleanup_result(result)
 
     def scp(self, src, dst):
-        """Copy file to  using Parallel SSH copy_file"""
+        """Copy file to A8 node using Parallel SSH copy_file"""
         result = {"0": [], "1": []}
         sites = ['{}.iot-lab.info'.format(site) for site in self.groups]
         for site in sites:
             try:
-                ssh = SSHClient(site, user=self.config_ssh['user'], timeout=10)
+                ssh = SSHClient()
+                ssh.load_system_host_keys()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(site, username=self.config_ssh['user'], timeout=10)
             except AuthenticationException:
                 raise OpenA8SshAuthenticationException(site)
             except ConnectionErrorException:
                 result["1"].append(site)
             else:
-                with SCPClient(ssh.client.get_transport()) as scp:
+                with SCPClient(ssh.get_transport()) as scp:
                     scp.put(src, dst)
-                ssh.client.close()
+                ssh.close()
                 result["0"].append(site)
         return _cleanup_result(result)
 
