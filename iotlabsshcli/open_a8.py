@@ -20,12 +20,9 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from __future__ import print_function
-
 import os.path
-
 from collections import OrderedDict
-from iotlabsshcli.sshlib import OpenA8Ssh, OpenA8SshAuthenticationException
+from iotlabsshcli.sshlib import OpenA8Ssh
 
 
 def _nodes_grouped(nodes):
@@ -37,14 +34,15 @@ def _nodes_grouped(nodes):
     ...                 'node-a8-2.saclay.iot-lab.info',
     ...                 'node-a8-2.lille.iot-lab.info'])
     ... # doctest: +NORMALIZE_WHITESPACE
-    OrderedDict([('grenoble', ['node-a8-1.grenoble.iot-lab.info',
-                               'node-a8-2.grenoble.iot-lab.info']),
-                 ('saclay', ['node-a8-2.saclay.iot-lab.info']),
-                 ('lille', ['node-a8-2.lille.iot-lab.info'])])
+    OrderedDict([('grenoble.iot-lab.info',
+                  ['node-a8-1.grenoble.iot-lab.info',
+                   'node-a8-2.grenoble.iot-lab.info']),
+                 ('saclay.iot-lab.info', ['node-a8-2.saclay.iot-lab.info']),
+                 ('lille.iot-lab.info', ['node-a8-2.lille.iot-lab.info'])])
     """
     result = OrderedDict()
     for host in nodes:
-        site = host.split('.')[1]
+        site = host.split('.', 1)[1]
         if site not in result:
             result.update({site: [host]})
         else:
@@ -59,143 +57,115 @@ _RESET_M3_CMD = 'source /etc/profile && /usr/bin/reset_a8_m3'
 _MAKE_EXECUTABLE_CMD = 'chmod +x {}'
 _RUN_SCRIPT_CMD = 'screen -S {screen} -dm bash -c \"{path}\"'
 _QUIT_SCRIPT_CMD = 'screen -X -S {screen} quit'
+_REMOTE_A8_DIR = 'A8/.iotlabsshcli'
 
 
 def flash_m3(config_ssh, nodes, firmware, verbose=False):
-    """Flash the firmware of M3 of open A8 nodes."""
-    # Configure ssh and remote firmware names.
+    """ Flash the firmware of M3 co-microcontroller """
+    failed_hosts = []
+    # configure ssh and remote firmware names.
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    remote_fw = os.path.join('~/A8/.iotlabsshcli', os.path.basename(firmware))
-
-    # Create firmware destination directory
-    try:
-        ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_fw)),
-                with_proxy=False)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-    else:
-        # Copy firmware on sites.
-        ssh.scp(firmware, remote_fw)
-
-        # Run firmware update.
-        result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
-
+    remote_fw = os.path.join(_REMOTE_A8_DIR, os.path.basename(firmware))
+    # copy the firmware to the site SSH servers
+    # scp create remote directory if it doesn't exist
+    result = ssh.scp(firmware, remote_fw)
+    # We delete failed hosts for the next command
+    if '1' in result:
+        failed_hosts = [ssh.groups.pop(res) for res in result['1']]
+    # Run firmware update.
+    result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
+    for hosts in failed_hosts:
+        result.get('1', []).extend(hosts)
     return {"flash-m3": result}
 
 
 def reset_m3(config_ssh, nodes, verbose=False):
-    """Reset the M3 of open A8 nodes."""
+    """ Reset M3 co-microcontroller """
 
-    # Configure ssh.
+    # Configure ssh
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-
-    # Run M3 reset command.
-    try:
-        result = ssh.run(_RESET_M3_CMD)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-
-    return {"reset-m3": result}
+    # Run M3 reset command
+    return {"reset-m3": ssh.run(_RESET_M3_CMD)}
 
 
 def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
-    """Reset the M3 of open A8 nodes."""
+    """ Wait for the open A8 nodes boot """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-
     # Wait for A8 boot
-    try:
-        result = ssh.wait(max_wait)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-
-    return {"wait-for-boot": result}
+    return {"wait-for-boot": ssh.wait(max_wait)}
 
 
 def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
-    """ Run a command on the A8 nodes or on the SSH frontend. """
+    """ Run a command on the A8 nodes or SSH frontend servers """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    try:
-        result = ssh.run(cmd, with_proxy=not run_on_frontend)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-
-    return {"run-cmd": result}
+    return {"run-cmd": ssh.run(cmd, with_proxy=not run_on_frontend)}
 
 
 def copy_file(config_ssh, nodes, file_path, verbose=False):
-    """ Copy a file on the A8 SSH frontend(s) directory(es)
-    (~/A8/.iotlabsshcli/)
-    """
+    """ copy a file to SSH frontend servers """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    remote_file = os.path.join('~/A8/.iotlabsshcli',
-                               os.path.basename(file_path))
-    try:
-        # Create file destination directory
-        ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_file)),
-                with_proxy=False)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-    else:
-        # Copy file on sites.
-        result = ssh.scp(file_path, remote_file)
-
+    # relative path with native client
+    remote_file = os.path.join(_REMOTE_A8_DIR, os.path.basename(file_path))
+    result = ssh.scp(file_path, remote_file)
     return {"copy-file": result}
+
+
+def _get_failed_result(groups, result, run_on_frontend):
+    """ Returns the list of nodes or SSH frontend servers that failed with
+        the execution of the command. We delete failed hosts for the next
+        commands
+    """
+    failed = []
+    if '1' in result:
+        if not run_on_frontend:
+            # nodes list
+            for site in result['1']:
+                failed.extend(groups[site])
+                del groups[site]
+        else:
+            # servers list
+            failed.extend(result['1'])
+            all(map(groups.pop, result['1']))
+    return failed
 
 
 def run_script(config_ssh, nodes, script, run_on_frontend=False,
                verbose=False):
-    """Run a script in background on the A8 nodes
-    or on the SSH frontend
-    """
+    """ Run a script in background on A8 nodes or SSH frontend servers """
 
     # Configure ssh.
+    failed_hosts = []
     groups = _nodes_grouped(nodes)
     ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-
     screen = '{user}-{exp_id}'.format(**config_ssh)
-    remote_script = os.path.join('~/A8/.iotlabsshcli',
-                                 os.path.basename(script))
-    script_data = {'screen': screen,
-                   'path': remote_script}
-    with_proxy = False
-
-    try:
-        # Create destination directory
-        ssh.run(_MKDIR_DST_CMD.format(os.path.dirname(remote_script)),
-                with_proxy=with_proxy)
-    except OpenA8SshAuthenticationException as exc:
-        print(exc.msg)
-        result = {"1": nodes}
-    else:
-        # Copy script on sites.
-        ssh.scp(script, remote_script)
-
-        # Make script executable
-        ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script),
-                with_proxy=with_proxy)
-
-        # Kill any running script
-        ssh.run(_QUIT_SCRIPT_CMD.format(**script_data),
-                with_proxy=not run_on_frontend)
-
-        # Run script
-        result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
-                         with_proxy=not run_on_frontend, use_pty=False)
-
+    remote_script = os.path.join(_REMOTE_A8_DIR, os.path.basename(script))
+    script_data = {'screen': screen, 'path': remote_script}
+    # Copy script on SSH frontend servers
+    scp_result = ssh.scp(script, remote_script)
+    failed_hosts.append(_get_failed_result(ssh.groups, scp_result,
+                                           run_on_frontend))
+    # Make script executable
+    run_result = ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script),
+                         with_proxy=False)
+    failed_hosts.append(_get_failed_result(ssh.groups, run_result,
+                                           run_on_frontend))
+    # Try cleanup and kill any running script (don't check the result)
+    ssh.run(_QUIT_SCRIPT_CMD.format(**script_data),
+            with_proxy=not run_on_frontend)
+    # Run script
+    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
+                     with_proxy=not run_on_frontend, use_pty=False)
+    for hosts in failed_hosts:
+        result.get('1', []).extend(hosts)
     return {"run-script": result}
