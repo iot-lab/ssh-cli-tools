@@ -31,9 +31,11 @@ from iotlabsshcli.open_a8 import (_RESET_M3_CMD, _UPDATE_M3_CMD,
                                   _QUIT_SCRIPT_CMD, _MAKE_EXECUTABLE_CMD)
 from .compat import patch
 
-_NODES = ['a8-{}.{}.iot-lab.info'.format(n, s)
-          for n in range(1, 6) for s in ['saclay', 'grenoble']]
-_ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
+_SACLAY_NODES = ['node-a8-{}.saclay.iot-lab.info'.format(n)
+                 for n in range(1, 6)]
+_GRENOBLE_NODES = ['node-a8-{}.grenoble.iot-lab.info'.format(n)
+                   for n in range(1, 4)]
+_ROOT_NODES = _SACLAY_NODES + _GRENOBLE_NODES
 
 
 @patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
@@ -46,9 +48,12 @@ def test_open_a8_flash_m3(scp, run):
     }
     firmware = '/tmp/firmware.elf'
     remote_fw = os.path.join('A8/.iotlabsshcli', os.path.basename(firmware))
-    return_value = {'0': 'test'}
-    run.return_value = return_value
+    scp.return_value = {'0': ['saclay.iot-lab.info'],
+                        '1': ['grenoble.iot-lab.info']}
 
+    return_value = {'0': _SACLAY_NODES}
+    run.return_value = return_value
+    return_value.get('1', []).extend(_GRENOBLE_NODES)
     ret = flash_m3(config_ssh, _ROOT_NODES, firmware)
 
     assert ret == {'flash-m3': return_value}
@@ -104,9 +109,18 @@ def test_open_a8_run_script(scp, run, run_on_frontend):
                                  os.path.basename(script))
     script_data = {'screen': screen,
                    'path': remote_script}
-    return_value = {'0': 'test'}
-    run.return_value = return_value
+    scp.return_value = {'0': ['saclay.iot-lab.info'],
+                        '1': ['grenoble.iot-lab.info']}
+    if not run_on_frontend:
+        return_value = {'0': _SACLAY_NODES}
+    else:
+        return_value = {'0': ['saclay.iot-lab.info']}
+    run.side_effect = [return_value for _n in range(3)]
 
+    if not run_on_frontend:
+        return_value.get('1', []).extend(['grenoble.iot-lab.info'])
+    else:
+        return_value.get('1', []).extend(_GRENOBLE_NODES)
     ret = run_script(config_ssh, _ROOT_NODES, script,
                      run_on_frontend=run_on_frontend)
 

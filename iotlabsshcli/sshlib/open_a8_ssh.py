@@ -20,12 +20,14 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-
+from __future__ import print_function
+import os
 import time
+import pssh
 from pssh.clients import SSHClient
 from pssh.clients import ParallelSSHClient
 from pssh.exceptions import SFTPError, UnknownHostError
-from pssh.exceptions import ConnectionError, AuthenticationError
+from pssh.exceptions import AuthenticationError
 from pssh import utils
 
 
@@ -52,7 +54,7 @@ def _cleanup_result(result):
 
 
 def _extend_result(result, new_result):
-    """ Extend result dictionnary values with new result
+    """Extend result dictionnary values with new result
     dictionnary values
 
     >>> result = {'0': [], '1': []}
@@ -119,8 +121,15 @@ def _check_all_nodes_processed(result):
     return not any(result.values())
 
 
+# library uses SSH agent for authentication if no key is provided.
+# As we don't have SSH agent launched on the SSH frontend server by
+# default, we pass the key directly
+SSH_KEY = ('~/.ssh/id_rsa' if os.getenv('IOT_LAB_FRONTEND_FQDN')
+           else None)
+
+
 class OpenA8Ssh():
-    """ Implement SSH API for Parallel SSH."""
+    """Implement SSH API for Parallel SSH."""
 
     def __init__(self, config_ssh, groups, verbose=False):
         self.config_ssh = config_ssh
@@ -131,7 +140,7 @@ class OpenA8Ssh():
             utils.enable_logger(utils.logger)
 
     def run(self, command, with_proxy=True, **kwargs):
-        """ Run ssh command using Parallel SSH."""
+        """Run ssh command using Parallel SSH."""
         result = {"0": [], "1": []}
         for site, hosts in self.groups.items():
             proxy_host = site if with_proxy else None
@@ -146,22 +155,22 @@ class OpenA8Ssh():
         return _cleanup_result(result)
 
     def scp(self, src, dst):
-        """ Copy file to A8 node using Parallel SCP native client """
+        """Copy file to A8 node using Parallel SCP native client."""
         result = {"0": [], "1": []}
         sites = self.groups.keys()
         for site in sites:
             try:
                 client = SSHClient(site, user=self.config_ssh['user'],
-                                   timeout=10)
+                                   pkey=SSH_KEY, timeout=10)
                 client.copy_file(src, dst)
                 result["0"].append(site)
-            except (SFTPError, UnknownHostError, ConnectionError,
-                    AuthenticationError):
+            except (SFTPError, UnknownHostError, AuthenticationError,
+                    pssh.exceptions.ConnectionError):
                 result["1"].append(site)
         return _cleanup_result(result)
 
     def wait(self, max_wait):
-        """ Wait for requested A8 nodes until they boot"""
+        """Wait for requested A8 nodes until they boot."""
         result = {"0": [], "1": []}
         start_time = time.time()
         groups = self.groups.copy()
@@ -185,16 +194,18 @@ class OpenA8Ssh():
         """Run ssh command using Parallel SSH."""
         result = {"0": [], "1": []}
         if proxy_host:
-            client = ParallelSSHClient(hosts, user='root',
+            client = ParallelSSHClient(hosts, user='root', pkey=SSH_KEY,
                                        proxy_host=proxy_host,
                                        proxy_user=user,
+                                       proxy_pkey=SSH_KEY,
                                        timeout=timeout)
         else:
-            client = ParallelSSHClient(hosts, user=user, timeout=timeout)
+            client = ParallelSSHClient(hosts, user=user, pkey=SSH_KEY,
+                                       timeout=timeout)
         output = client.run_command(command, stop_on_errors=False,
                                     return_list=True,
                                     **kwargs)
-        client.join(output, consume_output=True)
+        client.join(output)
         # output = pssh.output.HostOutput objects list
         for host in output:
             if host.exit_code == 0:

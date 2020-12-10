@@ -27,20 +27,17 @@ from pssh.exceptions import SFTPError
 from iotlabsshcli.open_a8 import _nodes_grouped
 from iotlabsshcli.sshlib import OpenA8Ssh
 from .compat import patch
-
-_SITES = ['saclay.iot-lab.info', 'grenoble.iot-lab.info']
-_NODES = ['a8-{}.{}'.format(n, s)
-          for n in range(1, 6) for s in _SITES]
-_ROOT_NODES = ['node-{}'.format(node) for node in _NODES]
+from .open_a8_test import _SACLAY_NODES, _GRENOBLE_NODES, _ROOT_NODES
 
 
 # pylint: disable=too-few-public-methods
 class HostOutput:
-    """  HostOutput test case class. ParallelSSH run_command
-         returns a list of pssh.output.HostOutput objects since
-         version 2.0.0
+    """HostOutput test case class.
+
+    ParallelSSH run_command returns a list of pssh.output.HostOutput
+    objects since version 2.0.0.
     """
-    def __init__(self, host, stdout, exit_code):
+    def __init__(self, host=None, stdout=None, exit_code=None):
         self.host = host
         self.stdout = stdout
         self.exit_code = exit_code
@@ -64,12 +61,20 @@ def test_run(join, run_command, run_on_frontend):
 
     # Print output of run_command
     if run_on_frontend:
-        output = [HostOutput(site, 'test', 0) for site in _SITES]
+        output = [HostOutput('saclay.iot-lab.info', 'test', 0),
+                  HostOutput()]
     else:
-        output = [HostOutput(node, 'test', 0) for node in _ROOT_NODES]
+        output = [HostOutput(host, 'test', 1) for host in _GRENOBLE_NODES]
+        output.extend([HostOutput(host, 'test', 0) for host in _SACLAY_NODES])
     run_command.return_value = output
 
-    node_ssh.run(test_command, with_proxy=not run_on_frontend)
+    ret = node_ssh.run(test_command, with_proxy=not run_on_frontend)
+    if run_on_frontend:
+        assert ret == {'0': ['saclay.iot-lab.info'],
+                       '1': ['grenoble.iot-lab.info']}
+    else:
+        assert ret == {'0': _SACLAY_NODES,
+                       '1': _GRENOBLE_NODES}
     assert run_command.call_count == len(groups)
     run_command.assert_called_with(test_command, stop_on_errors=False,
                                    return_list=True)
@@ -92,7 +97,7 @@ def test_scp(copy_file, init):
 
     node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
     ret = node_ssh.scp(src, dst)
-    assert copy_file.call_count == len(_SITES)
+    assert copy_file.call_count == 2
     assert ret == {'0': ['saclay.iot-lab.info', 'grenoble.iot-lab.info']}
 
     copy_file.side_effect = SFTPError()
@@ -117,16 +122,16 @@ def test_wait_all_boot(join, run_command):
     # normal boot
     node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
 
-    output = [HostOutput(node, 'test', 0) for node in _ROOT_NODES]
+    output = [HostOutput(host, 'test', 0) for host in _ROOT_NODES]
     run_command.return_value = output
 
     node_ssh.wait(120)
-    assert run_command.call_count == len(_SITES)
+    assert run_command.call_count == 2
     run_command.assert_called_with('uptime', stop_on_errors=False,
                                    return_list=True)
     run_command.reset_mock()
 
     node_ssh.run(test_command)
-    assert run_command.call_count == len(_SITES)
+    assert run_command.call_count == 2
     run_command.assert_called_with(test_command, stop_on_errors=False,
                                    return_list=True)

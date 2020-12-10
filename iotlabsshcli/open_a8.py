@@ -47,7 +47,6 @@ def _nodes_grouped(nodes):
             result.update({site: [host]})
         else:
             result[site].append(host)
-
     return result
 
 
@@ -61,7 +60,7 @@ _REMOTE_A8_DIR = 'A8/.iotlabsshcli'
 
 
 def flash_m3(config_ssh, nodes, firmware, verbose=False):
-    """ Flash the firmware of M3 co-microcontroller """
+    """Flash the firmware of M3 co-microcontroller """
     failed_hosts = []
     # configure ssh and remote firmware names.
     groups = _nodes_grouped(nodes)
@@ -81,7 +80,7 @@ def flash_m3(config_ssh, nodes, firmware, verbose=False):
 
 
 def reset_m3(config_ssh, nodes, verbose=False):
-    """ Reset M3 co-microcontroller """
+    """Reset M3 co-microcontroller """
 
     # Configure ssh
     groups = _nodes_grouped(nodes)
@@ -91,7 +90,7 @@ def reset_m3(config_ssh, nodes, verbose=False):
 
 
 def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
-    """ Wait for the open A8 nodes boot """
+    """Wait for the open A8 nodes boot """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -101,7 +100,7 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
 
 
 def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
-    """ Run a command on the A8 nodes or SSH frontend servers """
+    """Run a command on the A8 nodes or SSH frontend servers """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -110,7 +109,7 @@ def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
 
 
 def copy_file(config_ssh, nodes, file_path, verbose=False):
-    """ copy a file to SSH frontend servers """
+    """Copy a file to SSH frontend servers """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -122,12 +121,12 @@ def copy_file(config_ssh, nodes, file_path, verbose=False):
 
 
 def _get_failed_result(groups, result, run_on_frontend):
-    """ Returns the list of nodes or SSH frontend servers that failed with
-        the execution of the command. We delete failed hosts for the next
-        commands
+    """Returns failed nodes or SSH frontend servers list.
+
+    We delete failed hosts for the next commands in the groups
     """
     failed = []
-    if '1' in result:
+    if '1' in result and result['1']:
         if not run_on_frontend:
             # nodes list
             for site in result['1']:
@@ -142,7 +141,7 @@ def _get_failed_result(groups, result, run_on_frontend):
 
 def run_script(config_ssh, nodes, script, run_on_frontend=False,
                verbose=False):
-    """ Run a script in background on A8 nodes or SSH frontend servers """
+    """Run a script in background on A8 nodes or SSH frontend servers """
 
     # Configure ssh.
     failed_hosts = []
