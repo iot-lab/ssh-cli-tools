@@ -75,7 +75,7 @@ def flash_m3(config_ssh, nodes, firmware, verbose=False):
     # Run firmware update.
     result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
     for hosts in failed_hosts:
-        result.get('1', []).extend(hosts)
+        result.setdefault('1', []).extend(hosts)
     return {"flash-m3": result}
 
 
@@ -165,6 +165,6 @@ def run_script(config_ssh, nodes, script, run_on_frontend=False,
     # Run script
     result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
                      with_proxy=not run_on_frontend, use_pty=False)
-    for hosts in failed_hosts:
-        result.get('1', []).extend(hosts)
+    for hosts in filter(None, failed_hosts):
+        result.setdefault('1', []).extend(hosts)
     return {"run-script": result}
