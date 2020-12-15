@@ -93,7 +93,7 @@ Flash a firmware on the co-microcontroller of the working nodes:
 
     $ iotlab-ssh flash <firmware.elf> -l saclay,a8,2-3+5-7+9-10
     {
-        "flash-on": {
+        "flash": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info",
                 "node-a8-3.saclay.iot-lab.info",
@@ -113,7 +113,7 @@ Reset the co-microcontroller of one node:
 
     $ iotlab-ssh reset -l saclay,a8,2
     {
-        "reset-on": {
+        "reset": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info"
             ]
@@ -141,7 +141,7 @@ Use the *--verbose* option to get the commands output:
     [node-a8-2.saclay.iot-lab.info]	shutdown command invoked
     [node-a8-2.saclay.iot-lab.info]	Return Value: 0
     {
-        "reset-on": {
+        "reset": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info"
             ]
