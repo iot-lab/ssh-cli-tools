@@ -16,8 +16,8 @@ The provided sub-commands are:
 =================== ==========================================================================================
  Sub-command        Function
 =================== ==========================================================================================
- **flash**        Flash the given firmware on the nodes co-microcontroller
- **reset**        Reset the nodes co-microcontroller
+ **flash**           Flash the given firmware on the nodes co-microcontroller
+ **reset**           Reset the nodes co-microcontroller
  **wait-for-boot**   Block the execution until all nodes have booted or maximum wait time has expired
  **run-script**      Run a given script in background (screen session) on the given nodes
  **run-cmd**         Run a command on the given nodes
