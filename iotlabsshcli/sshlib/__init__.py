@@ -22,4 +22,4 @@
 
 # flake8: noqa
 
-from .open_a8_ssh import OpenA8Ssh, OpenA8SshAuthenticationException
+from .open_a8_ssh import OpenA8Ssh

@@ -20,15 +20,15 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-
 from __future__ import print_function
+import os
 import time
-import paramiko
-from paramiko import SSHClient
+import pssh
+from pssh.clients import SSHClient
 from pssh.clients import ParallelSSHClient
+from pssh.exceptions import SFTPError, UnknownHostError
+from pssh.exceptions import AuthenticationError
 from pssh import utils
-from pssh.exceptions import AuthenticationException, ConnectionErrorException
-from scp import SCPClient
 
 
 def _cleanup_result(result):
@@ -54,7 +54,7 @@ def _cleanup_result(result):
 
 
 def _extend_result(result, new_result):
-    """ Extend result dictionnary values with new result
+    """Extend result dictionnary values with new result
     dictionnary values
 
     >>> result = {'0': [], '1': []}
@@ -121,18 +121,15 @@ def _check_all_nodes_processed(result):
     return not any(result.values())
 
 
-class OpenA8SshAuthenticationException(Exception):
-    """Raised when an authentication error occurs on one site"""
-
-    def __init__(self, site):
-        msg = ('Cannot connect to IoT-LAB server on site '
-               '"{}", check your SSH configuration.'.format(site))
-        super(OpenA8SshAuthenticationException, self).__init__(msg)
-        self.msg = msg
+# library uses SSH agent for authentication if no key is provided.
+# As we don't have SSH agent launched on the SSH frontend server by
+# default, we pass the key directly
+SSH_KEY = ('~/.ssh/id_rsa' if os.getenv('IOT_LAB_FRONTEND_FQDN')
+           else None)
 
 
 class OpenA8Ssh():
-    """Implement SshAPI for Parallel SSH."""
+    """Implement SSH API for Parallel SSH."""
 
     def __init__(self, config_ssh, groups, verbose=False):
         self.config_ssh = config_ssh
@@ -146,8 +143,8 @@ class OpenA8Ssh():
         """Run ssh command using Parallel SSH."""
         result = {"0": [], "1": []}
         for site, hosts in self.groups.items():
-            proxy_host = '{}.iot-lab.info'.format(site) if with_proxy else None
-            hosts = hosts if with_proxy else ['{}.iot-lab.info'.format(site)]
+            proxy_host = site if with_proxy else None
+            hosts = hosts if with_proxy else [site]
             result_cmd = self.run_command(command,
                                           hosts=hosts,
                                           user=self.config_ssh['user'],
@@ -155,48 +152,39 @@ class OpenA8Ssh():
                                           proxy_host=proxy_host,
                                           **kwargs)
             result = _extend_result(result, result_cmd)
-
         return _cleanup_result(result)
 
     def scp(self, src, dst):
-        """Copy file to A8 node using Parallel SSH copy_file"""
+        """Copy file to A8 node using Parallel SCP native client."""
         result = {"0": [], "1": []}
-        sites = ['{}.iot-lab.info'.format(site) for site in self.groups]
+        sites = self.groups.keys()
         for site in sites:
             try:
-                ssh = SSHClient()
-                ssh.load_system_host_keys()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(site, username=self.config_ssh['user'], timeout=10)
-            except AuthenticationException:
-                raise OpenA8SshAuthenticationException(site)
-            except ConnectionErrorException:
-                result["1"].append(site)
-            else:
-                with SCPClient(ssh.get_transport()) as scp:
-                    scp.put(src, dst)
-                ssh.close()
+                client = SSHClient(site, user=self.config_ssh['user'],
+                                   pkey=SSH_KEY, timeout=10)
+                client.copy_file(src, dst)
                 result["0"].append(site)
+            except (SFTPError, UnknownHostError, AuthenticationError,
+                    pssh.exceptions.ConnectionError):
+                result["1"].append(site)
         return _cleanup_result(result)
 
     def wait(self, max_wait):
-        """Wait for requested A8 nodes until they boot"""
+        """Wait for requested A8 nodes until they boot."""
         result = {"0": [], "1": []}
         start_time = time.time()
         groups = self.groups.copy()
         while (start_time + max_wait > time.time() and
                not _check_all_nodes_processed(groups)):
             for site, hosts in groups.copy().items():
-                proxy_host = '{}.iot-lab.info'.format(site)
                 result_cmd = self.run_command("uptime",
                                               hosts=hosts,
                                               user=self.config_ssh['user'],
                                               verbose=self.verbose,
-                                              proxy_host=proxy_host)
+                                              proxy_host=site)
                 groups[site] = result_cmd["1"]
                 groups = _cleanup_result(groups)
                 result = _extend_result(result, result_cmd)
-
         return _cleanup_result(result)
 
     # pylint: disable=too-many-arguments
@@ -206,31 +194,30 @@ class OpenA8Ssh():
         """Run ssh command using Parallel SSH."""
         result = {"0": [], "1": []}
         if proxy_host:
-            client = ParallelSSHClient(hosts, user='root',
+            client = ParallelSSHClient(hosts, user='root', pkey=SSH_KEY,
                                        proxy_host=proxy_host,
                                        proxy_user=user,
+                                       proxy_pkey=SSH_KEY,
                                        timeout=timeout)
         else:
-            client = ParallelSSHClient(hosts, user=user, timeout=timeout)
+            client = ParallelSSHClient(hosts, user=user, pkey=SSH_KEY,
+                                       timeout=timeout)
         output = client.run_command(command, stop_on_errors=False,
+                                    return_list=True,
                                     **kwargs)
         client.join(output)
-        for host in hosts:
-            if host not in output:
-                # Pssh AuthenticationException duplicate output dict key
-                # {'saclay.iot-lab.info': {'exception': ...},
-                # {'saclay.iot-lab.info_qzhtyxlt': {'exception': ...}}
-                site = next(iter(sorted(output)))
-                raise OpenA8SshAuthenticationException(site)
-            result['0' if output[host]['exit_code'] == 0
-                   else '1'].append(host)
-        if verbose:
-            for host in hosts:
-                # Pssh >= 1.0.0: stdout is None instead of generator object
-                # when you have ConnectionErrorException
-                stdout = output[host].get('stdout')
-                if stdout:
-                    for _ in stdout:
-                        pass
-
+        # output = pssh.output.HostOutput objects list
+        for host in output:
+            if host.exit_code == 0:
+                if verbose and host.stdout:
+                    for line in host.stdout:
+                        print(line)
+                result['0'].append(host.host)
+            elif host.host is not None:
+                result['1'].append(host.host)
+        # find hosts that have raised Exception (Authentication, Connection)
+        # host.exception = pssh.exceptions.* & host.host = None
+        failed_hosts = list(set(hosts) - set(sum(result.values(), [])))
+        if failed_hosts:
+            result['1'].extend(failed_hosts)
         return result
