@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-"""Tests for iotlabsshcli.open_a8 package."""
+"""Tests for iotlabsshcli.open_linux package."""
 
 import os.path
 from pytest import mark
 
-from iotlabsshcli.open_a8 import reset_m3, flash_m3, wait_for_boot, run_script
-from iotlabsshcli.open_a8 import run_cmd, copy_file
-from iotlabsshcli.open_a8 import (_RESET_M3_CMD, _UPDATE_M3_CMD,
-                                  _RUN_SCRIPT_CMD,
-                                  _QUIT_SCRIPT_CMD, _MAKE_EXECUTABLE_CMD)
+from iotlabsshcli.open_linux import reset, flash, wait_for_boot, run_script
+from iotlabsshcli.open_linux import run_cmd, copy_file
+from iotlabsshcli.open_linux import (_RESET_CMD, _FLASH_CMD,
+                                     _RUN_SCRIPT_CMD,
+                                     _QUIT_SCRIPT_CMD, _MAKE_EXECUTABLE_CMD)
 from .compat import patch
 
 _SACLAY_NODES = ['node-a8-{}.saclay.iot-lab.info'.format(n)
@@ -38,33 +38,34 @@ _GRENOBLE_NODES = ['node-a8-{}.grenoble.iot-lab.info'.format(n)
 _ROOT_NODES = _SACLAY_NODES + _GRENOBLE_NODES
 
 
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.scp')
-def test_open_a8_flash_m3(scp, run):
-    """Test flashing an M3."""
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.run')
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.scp')
+def test_open_linux_flash(scp, run):
+    """Test flashing a firmware."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
     }
     firmware = '/tmp/firmware.elf'
-    remote_fw = os.path.join('A8/.iotlabsshcli', os.path.basename(firmware))
+    remote_fw = os.path.join('shared/.iotlabsshcli',
+                             os.path.basename(firmware))
     scp.return_value = {'0': ['saclay.iot-lab.info'],
                         '1': ['grenoble.iot-lab.info']}
 
     return_value = {'0': _SACLAY_NODES}
     run.return_value = return_value
     return_value.get('1', []).extend(_GRENOBLE_NODES)
-    ret = flash_m3(config_ssh, _ROOT_NODES, firmware)
+    ret = flash(config_ssh, _ROOT_NODES, firmware)
 
-    assert ret == {'flash-m3': return_value}
+    assert ret == {'flash': return_value}
     scp.assert_called_once_with(firmware, remote_fw)
     assert run.call_count == 1
-    run.mock_calls[0].assert_called_with(_UPDATE_M3_CMD.format(remote_fw))
+    run.mock_calls[0].assert_called_with(_FLASH_CMD.format(remote_fw))
 
 
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-def test_open_a8_reset_m3(run):
-    """Test resetting an M3."""
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.run')
+def test_open_linux_reset(run):
+    """Test resetting co-microcontroller."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
@@ -72,15 +73,15 @@ def test_open_a8_reset_m3(run):
     return_value = {'0': 'test'}
     run.return_value = return_value
 
-    ret = reset_m3(config_ssh, _ROOT_NODES)
-    assert ret == {'reset-m3': return_value}
+    ret = reset(config_ssh, _ROOT_NODES)
+    assert ret == {'reset': return_value}
 
-    run.assert_called_once_with(_RESET_M3_CMD)
+    run.assert_called_once_with(_RESET_CMD)
 
 
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.wait')
-def test_open_a8_wait_for_boot(wait):
-    """Test wait for A8 boot."""
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.wait')
+def test_open_linux_wait_for_boot(wait):
+    """Test wait for Linux boot."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
@@ -95,17 +96,17 @@ def test_open_a8_wait_for_boot(wait):
 
 
 @mark.parametrize('run_on_frontend', [False, True])
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.scp')
-def test_open_a8_run_script(scp, run, run_on_frontend):
-    """Test run script on A8 nodes."""
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.run')
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.scp')
+def test_open_linux_run_script(scp, run, run_on_frontend):
+    """Test run script on Linux nodes."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
     }
     screen = '{user}-{exp_id}'.format(**config_ssh)
     script = '/tmp/script.sh'
-    remote_script = os.path.join('A8/.iotlabsshcli',
+    remote_script = os.path.join('shared/.iotlabsshcli',
                                  os.path.basename(script))
     script_data = {'screen': screen,
                    'path': remote_script}
@@ -140,15 +141,15 @@ def test_open_a8_run_script(scp, run, run_on_frontend):
         with_proxy=not run_on_frontend)
 
 
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.scp')
-def test_open_a8_copy_file(scp):
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.scp')
+def test_open_linux_copy_file(scp):
     """Test copy file on the SSH frontend."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,
     }
     file_path = '/tmp/script.sh'
-    remote_file = os.path.join('A8/.iotlabsshcli',
+    remote_file = os.path.join('shared/.iotlabsshcli',
                                os.path.basename(file_path))
     return_value = {'0': 'test'}
     scp.return_value = return_value
@@ -160,9 +161,9 @@ def test_open_a8_copy_file(scp):
 
 
 @mark.parametrize('run_on_frontend', [False, True])
-@patch('iotlabsshcli.sshlib.OpenA8Ssh.run')
-def test_open_a8_run_cmd(run, run_on_frontend):
-    """Test run command on A8 nodes."""
+@patch('iotlabsshcli.sshlib.OpenLinuxSsh.run')
+def test_open_linux_run_cmd(run, run_on_frontend):
+    """Test run command on Linux nodes."""
     config_ssh = {
         'user': 'username',
         'exp_id': 123,

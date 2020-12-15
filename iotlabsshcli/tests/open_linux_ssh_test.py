@@ -19,15 +19,15 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-"""Tests for iotlabsshcli.open_a8 package."""
+"""Tests for iotlabsshcli.open_linux package."""
 
 from pytest import mark
 from pssh.exceptions import SFTPError
 
-from iotlabsshcli.open_a8 import _nodes_grouped
-from iotlabsshcli.sshlib import OpenA8Ssh
+from iotlabsshcli.open_linux import _nodes_grouped
+from iotlabsshcli.sshlib import OpenLinuxSsh
 from .compat import patch
-from .open_a8_test import _SACLAY_NODES, _GRENOBLE_NODES, _ROOT_NODES
+from .open_linux_test import _SACLAY_NODES, _GRENOBLE_NODES, _ROOT_NODES
 
 
 # pylint: disable=too-few-public-methods
@@ -57,7 +57,7 @@ def test_run(join, run_command, run_on_frontend):
     test_command = 'test'
     groups = _nodes_grouped(_ROOT_NODES)
 
-    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
     # Print output of run_command
     if run_on_frontend:
@@ -95,7 +95,7 @@ def test_scp(copy_file, init):
 
     groups = _nodes_grouped(_ROOT_NODES)
 
-    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
     ret = node_ssh.scp(src, dst)
     assert copy_file.call_count == 2
     assert ret == {'0': ['saclay.iot-lab.info', 'grenoble.iot-lab.info']}
@@ -120,7 +120,7 @@ def test_wait_all_boot(join, run_command):
     groups = _nodes_grouped(_ROOT_NODES)
 
     # normal boot
-    node_ssh = OpenA8Ssh(config_ssh, groups, verbose=True)
+    node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
     output = [HostOutput(host, 'test', 0) for host in _ROOT_NODES]
     run_command.return_value = output

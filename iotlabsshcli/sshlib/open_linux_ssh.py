@@ -128,7 +128,7 @@ SSH_KEY = ('~/.ssh/id_rsa' if os.getenv('IOT_LAB_FRONTEND_FQDN')
            else None)
 
 
-class OpenA8Ssh():
+class OpenLinuxSsh():
     """Implement SSH API for Parallel SSH."""
 
     def __init__(self, config_ssh, groups, verbose=False):
@@ -155,7 +155,7 @@ class OpenA8Ssh():
         return _cleanup_result(result)
 
     def scp(self, src, dst):
-        """Copy file to A8 node using Parallel SCP native client."""
+        """Copy file using Parallel SCP native client."""
         result = {"0": [], "1": []}
         sites = self.groups.keys()
         for site in sites:
@@ -170,7 +170,7 @@ class OpenA8Ssh():
         return _cleanup_result(result)
 
     def wait(self, max_wait):
-        """Wait for requested A8 nodes until they boot."""
+        """Wait for requested Linux nodes until they boot."""
         result = {"0": [], "1": []}
         start_time = time.time()
         groups = self.groups.copy()

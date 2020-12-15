@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-"""iotlabsshcli parser for Open A8 cli."""
+"""iotlabsshcli parser for Open Linux nodes cli."""
 
 # This file is a part of IoT-LAB ssh-cli-tools
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -22,7 +22,7 @@
 
 import os.path
 from collections import OrderedDict
-from iotlabsshcli.sshlib import OpenA8Ssh
+from iotlabsshcli.sshlib import OpenLinuxSsh
 
 
 def _nodes_grouped(nodes):
@@ -50,22 +50,21 @@ def _nodes_grouped(nodes):
     return result
 
 
-_MKDIR_DST_CMD = 'mkdir -p {}'
-_UPDATE_M3_CMD = 'source /etc/profile && /usr/bin/flash_a8_m3 {}'
-_RESET_M3_CMD = 'source /etc/profile && /usr/bin/reset_a8_m3'
+_FLASH_CMD = 'source /etc/profile && /usr/bin/iotlab_flash {}'
+_RESET_CMD = 'source /etc/profile && /usr/bin/iotlab_reset'
 _MAKE_EXECUTABLE_CMD = 'chmod +x {}'
 _RUN_SCRIPT_CMD = 'screen -S {screen} -dm bash -c \"{path}\"'
 _QUIT_SCRIPT_CMD = 'screen -X -S {screen} quit'
-_REMOTE_A8_DIR = 'A8/.iotlabsshcli'
+_REMOTE_SHARED_DIR = 'shared/.iotlabsshcli'
 
 
-def flash_m3(config_ssh, nodes, firmware, verbose=False):
-    """Flash the firmware of M3 co-microcontroller """
+def flash(config_ssh, nodes, firmware, verbose=False):
+    """Flash the firmware of co-microcontroller """
     failed_hosts = []
     # configure ssh and remote firmware names.
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    remote_fw = os.path.join(_REMOTE_A8_DIR, os.path.basename(firmware))
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
+    remote_fw = os.path.join(_REMOTE_SHARED_DIR, os.path.basename(firmware))
     # copy the firmware to the site SSH servers
     # scp create remote directory if it doesn't exist
     result = ssh.scp(firmware, remote_fw)
@@ -73,38 +72,38 @@ def flash_m3(config_ssh, nodes, firmware, verbose=False):
     if '1' in result:
         failed_hosts = [ssh.groups.pop(res) for res in result['1']]
     # Run firmware update.
-    result = ssh.run(_UPDATE_M3_CMD.format(remote_fw))
+    result = ssh.run(_FLASH_CMD.format(remote_fw))
     for hosts in failed_hosts:
         result.setdefault('1', []).extend(hosts)
-    return {"flash-m3": result}
+    return {"flash": result}
 
 
-def reset_m3(config_ssh, nodes, verbose=False):
-    """Reset M3 co-microcontroller """
+def reset(config_ssh, nodes, verbose=False):
+    """Reset co-microcontroller """
 
     # Configure ssh
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    # Run M3 reset command
-    return {"reset-m3": ssh.run(_RESET_M3_CMD)}
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
+    # Run reset command
+    return {"reset": ssh.run(_RESET_CMD)}
 
 
 def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
-    """Wait for the open A8 nodes boot """
+    """Wait for the open Linux nodes boot """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
-    # Wait for A8 boot
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
+    # Wait for boot
     return {"wait-for-boot": ssh.wait(max_wait)}
 
 
 def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
-    """Run a command on the A8 nodes or SSH frontend servers """
+    """Run a command on the Linux nodes or SSH frontend servers """
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
     return {"run-cmd": ssh.run(cmd, with_proxy=not run_on_frontend)}
 
 
@@ -113,9 +112,9 @@ def copy_file(config_ssh, nodes, file_path, verbose=False):
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
     # relative path with native client
-    remote_file = os.path.join(_REMOTE_A8_DIR, os.path.basename(file_path))
+    remote_file = os.path.join(_REMOTE_SHARED_DIR, os.path.basename(file_path))
     result = ssh.scp(file_path, remote_file)
     return {"copy-file": result}
 
@@ -141,14 +140,14 @@ def _get_failed_result(groups, result, run_on_frontend):
 
 def run_script(config_ssh, nodes, script, run_on_frontend=False,
                verbose=False):
-    """Run a script in background on A8 nodes or SSH frontend servers """
+    """Run a script in background on Linux nodes or SSH frontend servers """
 
     # Configure ssh.
     failed_hosts = []
     groups = _nodes_grouped(nodes)
-    ssh = OpenA8Ssh(config_ssh, groups, verbose=verbose)
+    ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
     screen = '{user}-{exp_id}'.format(**config_ssh)
-    remote_script = os.path.join(_REMOTE_A8_DIR, os.path.basename(script))
+    remote_script = os.path.join(_REMOTE_SHARED_DIR, os.path.basename(script))
     script_data = {'screen': screen, 'path': remote_script}
     # Copy script on SSH frontend servers
     scp_result = ssh.scp(script, remote_script)
