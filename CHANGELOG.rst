@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0.0
+-----
+
++ bump parallel-ssh to version 2
++ renaming for Open Linux nodes
+
 0.2.3
 -----
 
