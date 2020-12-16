@@ -5,7 +5,7 @@ SSH CLI Tools
 |PyPI| |Travis| |Codecov|
 
 **SSH CLI Tools** provides a set of commands for interacting remotely and easily
-with IoT-Lab Open A8 nodes. See `here <https://www.iot-lab.info/hardware/a8/>`_
+with IoT-Lab Linux nodes. See `here <https://www.iot-lab.info/docs/boards/iot-lab-a8-m3/>`_
 to get more information on this kind of node.
 
 All available actions provided by **SSH CLI Tools** are available as sub-commands
@@ -16,12 +16,12 @@ The provided sub-commands are:
 =================== ==========================================================================================
  Sub-command        Function
 =================== ==========================================================================================
- **flash-m3**        Flash the given firmware on the M3 MCU of A8 nodes
- **reset-m3**        Reset the M3 node of A8 nodes
- **wait-for-boot**   Block the execution until all given A8 nodes have booted or maximum wait time has expired
- **run-script**      Run a given script in background (screen session) on the given A8 nodes
- **run-cmd**         Run a command on the given A8 nodes
- **copy-file**       Copy a file on SSH frontend homedir directory (*~/A8/.iotlabsshcli*)
+ **flash**           Flash the given firmware on the nodes co-microcontroller
+ **reset**           Reset the nodes co-microcontroller
+ **wait-for-boot**   Block the execution until all nodes have booted or maximum wait time has expired
+ **run-script**      Run a given script in background (screen session) on the given nodes
+ **run-cmd**         Run a command on the given nodes
+ **copy-file**       Copy a file on SSH frontend homedir directory (*~/shared/.iotlabsshcli*)
 =================== ==========================================================================================
 
 **SSH CLI Tools** can be used in conjunction with the
@@ -43,16 +43,16 @@ See `<INSTALLING.md>`_ for details on installation options.
 Requirements:
 -------------
 
-Open A8 nodes are reachable through a gateway SSH server (IoT-LAB SSH
+Linux nodes are reachable through a gateway SSH server (IoT-LAB SSH
 frontend). For this reason you must verify that your SSH public key used by
 ssh-cli-tools has been recorded in your IoT-LAB user profile. You can find how
 to configure your IoT-LAB SSH access in this
-`tutorial <https://www.iot-lab.info/tutorials/configure-your-ssh-access/>`_.
+`documentation <https://www.iot-lab.info/docs/getting-started/ssh-access/>`_.
 
 Examples:
 ---------
 
-Start an experiment, wait for it to be ready, wait for all A8 boot:
+Start an experiment, wait for it to be ready, wait for all nodes boot:
 ...................................................................
 
 .. code-block::
@@ -86,14 +86,14 @@ Start an experiment, wait for it to be ready, wait for all A8 boot:
 
 **Note:** node-a8-4 and node-a8-8 are broken in Saclay.
 
-Flash a firmware on the M3 of the working node:
+Flash a firmware on the co-microcontroller of the working nodes:
 ...............................................
 
 .. code-block::
 
-    $ iotlab-ssh flash-m3 <firmware.elf> -l saclay,a8,2-3+5-7+9-10
+    $ iotlab-ssh flash <firmware.elf> -l saclay,a8,2-3+5-7+9-10
     {
-        "flash-m3": {
+        "flash": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info",
                 "node-a8-3.saclay.iot-lab.info",
@@ -106,14 +106,14 @@ Flash a firmware on the M3 of the working node:
         }
     }
 
-Reset the M3 of one A8 node:
+Reset the co-microcontroller of one node:
 ............................
 
 .. code-block::
 
-    $ iotlab-ssh reset-m3 -l saclay,a8,2
+    $ iotlab-ssh reset -l saclay,a8,2
     {
-        "reset-m3": {
+        "reset": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info"
             ]
@@ -125,7 +125,7 @@ Use the *--verbose* option to get the commands output:
 
 .. code-block::
 
-    $ iotlab-ssh --verbose reset-m3 -l saclay,a8,2
+    $ iotlab-ssh --verbose reset -l saclay,a8,2
     Connecting via SSH proxy saclay.iot-lab.info:22 -> node-a8-2.saclay.iot-lab.info:22
     [node-a8-2.saclay.iot-lab.info]	Open On-Chip Debugger 0.9.0-dirty (2016-04-15-00:55)
     [node-a8-2.saclay.iot-lab.info]	Licensed under GNU GPL v2
@@ -141,14 +141,14 @@ Use the *--verbose* option to get the commands output:
     [node-a8-2.saclay.iot-lab.info]	shutdown command invoked
     [node-a8-2.saclay.iot-lab.info]	Return Value: 0
     {
-        "reset-m3": {
+        "reset": {
             "0": [
                 "node-a8-2.saclay.iot-lab.info"
             ]
         }
     }
 
-Run a command on two A8 nodes:
+Run a command on two nodes:
 ..............................
 
 .. code-block::
@@ -181,7 +181,7 @@ Run a command on SSH frontend:
         }
     }
 
-Copy file on SSH frontend homedir directory (~/A8/.iotlabsshcli):
+Copy file on SSH frontend homedir directory (~/shared/.iotlabsshcli):
 .................................................................
 
 .. code-block::
@@ -194,7 +194,7 @@ Copy file on SSH frontend homedir directory (~/A8/.iotlabsshcli):
             ]
         }
     }
-    $ iotlab-ssh run-cmd "tar -xzvf ~/A8/.iotlabsshcli/test.tar.gz -C ~/A8/.iotlabsshcli/" --frontend
+    $ iotlab-ssh run-cmd "tar -xzvf ~/shared/.iotlabsshcli/test.tar.gz -C ~/shared/.iotlabsshcli/" --frontend
     {
         "run-cmd": {
             "0": [
@@ -203,7 +203,7 @@ Copy file on SSH frontend homedir directory (~/A8/.iotlabsshcli):
         }
     }
 
-**Note:** A8 homedir directory is mounted (via NFS) by A8 nodes during experiment.
+**Note:** shared homedir directory is mounted (via NFS) by Linux nodes during experiment.
 
 Run the script `/tmp/test.sh` on `node-a8-2` in saclay:
 .......................................................
@@ -219,7 +219,7 @@ Run the script `/tmp/test.sh` on `node-a8-2` in saclay:
         }
     }
 
-**Note:** a screen session is launched on the A8 node
+**Note:** a screen session is launched on the node
 to actually run the script and provide easy access to outputs if needed.
 When the script ends, the screen session is terminated and the logs are gone.
 

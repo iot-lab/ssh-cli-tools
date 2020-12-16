@@ -1,7 +1,7 @@
 # iotlab-* completion
 
 _iotlab_resources_list() {
-    # TODO: complete `iotlab-ssh flash-m3 -l <tab>`
+    # TODO: complete `iotlab-ssh flash -l <tab>`
     COMPREPLY=()
 }
 
@@ -35,7 +35,7 @@ _iotlab_ssh() {
                 ;;
             *)
                 # Complete with a command name
-                COMPREPLY=($(compgen -W 'flash-m3 reset-m3 wait-for-boot run-script run-cmd copy-file' -- "$cur"))
+                COMPREPLY=($(compgen -W 'flash reset wait-for-boot run-script run-cmd copy-file' -- "$cur"))
                 return 0
                 ;;
         esac
@@ -43,7 +43,7 @@ _iotlab_ssh() {
 
     # Complete command arguments
     case $cmd in
-        flash-m3|copy-file)
+        flash|copy-file)
             case "$prev" in
                 -u|--user|-p|--password)
                     # Nothing to complete
@@ -61,7 +61,7 @@ _iotlab_ssh() {
                     _filedir
             esac
             ;;
-        reset-m3)
+        reset)
             case "$prev" in
                 -u|--user|-p|--password)
                     # Nothing to complete

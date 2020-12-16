@@ -19,11 +19,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-"""Tests for iotlabsshcli.parser.open_a8 package."""
+"""Tests for iotlabsshcli.parser.open_linux package."""
 
 import jmespath
 
-from iotlabsshcli.parser import open_a8_parser
+from iotlabsshcli.parser import open_linux_parser
 
 from .iotlabsshcli_mock import MainMock
 from .compat import patch, Mock
@@ -33,64 +33,64 @@ from .compat import patch, Mock
 
 
 class TestMainNodeParser(MainMock):
-    """Test open-a8-cli main parser."""
+    """Test open-linux-cli main parser."""
 
     _nodes = ['a8-{0}.saclay.iot-lab.info'.format(i) for i in range(1, 6)]
     _root_nodes = ['node-{0}'.format(node) for node in _nodes]
 
-    @patch('iotlabsshcli.open_a8.flash_m3')
+    @patch('iotlabsshcli.open_linux.flash')
     @patch('iotlabcli.parser.common.list_nodes')
-    def test_main_flash_m3(self, list_nodes, flash_m3):
-        """Run the parser.node.main with update-m3 subparser function."""
+    def test_main_flash(self, list_nodes, flash):
+        """Run the parser.node.main with update subparser function."""
 
-        flash_m3.return_value = {'result': 'test'}
+        flash.return_value = {'result': 'test'}
         list_nodes.return_value = self._nodes
 
-        args = ['flash-m3', 'firmware.elf', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        args = ['flash', 'firmware.elf', '-l', 'saclay,a8,1-5']
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        flash_m3.assert_called_with({'user': 'username', 'exp_id': 123},
-                                    self._root_nodes, 'firmware.elf',
-                                    verbose=False)
+        flash.assert_called_with({'user': 'username', 'exp_id': 123},
+                                 self._root_nodes, 'firmware.elf',
+                                 verbose=False)
 
         exp_info_res = {"items": [{"network_address": node}
                                   for node in self._nodes]}
         with patch.object(self.api, 'get_experiment_info',
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
-            args = ['flash-m3', 'firmware.elf']
-            open_a8_parser.main(args)
+            args = ['flash', 'firmware.elf']
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
-            flash_m3.assert_called_with({'user': 'username', 'exp_id': 123},
-                                        self._root_nodes,
-                                        'firmware.elf', verbose=False)
+            flash.assert_called_with({'user': 'username', 'exp_id': 123},
+                                     self._root_nodes, 'firmware.elf',
+                                     verbose=False)
 
-    @patch('iotlabsshcli.open_a8.reset_m3')
+    @patch('iotlabsshcli.open_linux.reset')
     @patch('iotlabcli.parser.common.list_nodes')
-    def test_main_reset_m3(self, list_nodes, reset_m3):
-        """Run the parser.node.main with reset-m3 subparser function."""
-        reset_m3.return_value = {'result': 'test'}
+    def test_main_reset(self, list_nodes, reset):
+        """Run the parser.node.main with reset subparser function."""
+        reset.return_value = {'result': 'test'}
         list_nodes.return_value = self._nodes
 
-        args = ['reset-m3', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        args = ['reset', '-l', 'saclay,a8,1-5']
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
-        reset_m3.assert_called_with({'user': 'username', 'exp_id': 123},
-                                    self._root_nodes,
-                                    verbose=False)
+        reset.assert_called_with({'user': 'username', 'exp_id': 123},
+                                 self._root_nodes,
+                                 verbose=False)
 
         exp_info_res = {"items": [{"network_address": node}
                                   for node in self._nodes]}
         with patch.object(self.api, 'get_experiment_info',
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
-            args = ['reset-m3']
-            open_a8_parser.main(args)
+            args = ['reset']
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
-            reset_m3.assert_called_with({'user': 'username', 'exp_id': 123},
-                                        self._root_nodes, verbose=False)
+            reset.assert_called_with({'user': 'username', 'exp_id': 123},
+                                     self._root_nodes, verbose=False)
 
-    @patch('iotlabsshcli.open_a8.wait_for_boot')
+    @patch('iotlabsshcli.open_linux.wait_for_boot')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_wait_for_boot(self, list_nodes, wait_for_boot):
         """Run the parser.node.main with wait-for-boot subparser function."""
@@ -98,7 +98,7 @@ class TestMainNodeParser(MainMock):
         list_nodes.return_value = self._nodes
 
         args = ['wait-for-boot', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         wait_for_boot.assert_called_with({'user': 'username', 'exp_id': 123},
                                          self._root_nodes,
@@ -106,7 +106,7 @@ class TestMainNodeParser(MainMock):
                                          verbose=False)
 
         args = ['wait-for-boot', "--max-wait", '10', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         wait_for_boot.assert_called_with({'user': 'username', 'exp_id': 123},
                                          self._root_nodes,
@@ -119,7 +119,7 @@ class TestMainNodeParser(MainMock):
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
             args = ['wait-for-boot']
-            open_a8_parser.main(args)
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
             wait_for_boot.assert_called_with({'user': 'username',
                                               'exp_id': 123},
@@ -127,7 +127,7 @@ class TestMainNodeParser(MainMock):
                                              max_wait=120,
                                              verbose=False)
 
-    @patch('iotlabsshcli.open_a8.run_script')
+    @patch('iotlabsshcli.open_linux.run_script')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_run_script(self, list_nodes, run_script):
         """Run the parser.node.main with run-script subparser function."""
@@ -135,7 +135,7 @@ class TestMainNodeParser(MainMock):
         list_nodes.return_value = self._nodes
 
         args = ['run-script', 'script.sh', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         run_script.assert_called_with({'user': 'username', 'exp_id': 123},
                                       self._root_nodes,
@@ -143,7 +143,7 @@ class TestMainNodeParser(MainMock):
 
         args = ['run-script', 'script.sh', '--frontend', '-l',
                 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         run_script.assert_called_with({'user': 'username', 'exp_id': 123},
                                       self._root_nodes,
@@ -155,13 +155,13 @@ class TestMainNodeParser(MainMock):
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
             args = ['run-script', 'script.sh']
-            open_a8_parser.main(args)
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
             run_script.assert_called_with({'user': 'username', 'exp_id': 123},
                                           self._root_nodes,
                                           'script.sh', False, verbose=False)
 
-    @patch('iotlabsshcli.open_a8.run_cmd')
+    @patch('iotlabsshcli.open_linux.run_cmd')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_run_cmd(self, list_nodes, run_cmd):
         """Run the parser.node.main with run-cmd subparser function."""
@@ -169,14 +169,14 @@ class TestMainNodeParser(MainMock):
         list_nodes.return_value = self._nodes
 
         args = ['run-cmd', 'uname -a', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         run_cmd.assert_called_with({'user': 'username', 'exp_id': 123},
                                    self._root_nodes,
                                    'uname -a', False, verbose=False)
 
         args = ['run-cmd', 'uname -a', '--frontend', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         run_cmd.assert_called_with({'user': 'username', 'exp_id': 123},
                                    self._root_nodes,
@@ -188,13 +188,13 @@ class TestMainNodeParser(MainMock):
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
             args = ['run-cmd', 'uname -a']
-            open_a8_parser.main(args)
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
             run_cmd.assert_called_with({'user': 'username', 'exp_id': 123},
                                        self._root_nodes,
                                        'uname -a', False, verbose=False)
 
-    @patch('iotlabsshcli.open_a8.copy_file')
+    @patch('iotlabsshcli.open_linux.copy_file')
     @patch('iotlabcli.parser.common.list_nodes')
     def test_main_copy_file(self, list_nodes, copy_file):
         """Run the parser.node.main with copy-file subparser function."""
@@ -202,7 +202,7 @@ class TestMainNodeParser(MainMock):
         list_nodes.return_value = self._nodes
 
         args = ['copy-file', 'script.sh', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         list_nodes.assert_called_with(self.api, 123, [self._nodes], None)
         copy_file.assert_called_with({'user': 'username', 'exp_id': 123},
                                      self._root_nodes,
@@ -214,7 +214,7 @@ class TestMainNodeParser(MainMock):
                           Mock(return_value=exp_info_res)):
             list_nodes.return_value = []
             args = ['copy-file', 'script.sh']
-            open_a8_parser.main(args)
+            open_linux_parser.main(args)
             list_nodes.assert_called_with(self.api, 123, None, None)
             copy_file.assert_called_with({'user': 'username', 'exp_id': 123},
                                          self._root_nodes,
@@ -223,13 +223,13 @@ class TestMainNodeParser(MainMock):
     def test_main_unknown_function(self):
         """Run the parser.node.main with an unknown function."""
         args = ['unknown-cmd']
-        self.assertRaises(SystemExit, open_a8_parser.main, args)
+        self.assertRaises(SystemExit, open_linux_parser.main, args)
 
     @patch('iotlabcli.parser.common.list_nodes')
     def test_run_unknown_function(self, list_nodes):
         # pylint:disable=unused-argument
         """Run the parser.node.main with an unknown function."""
-        parser = open_a8_parser.parse_options()
+        parser = open_linux_parser.parse_options()
         parser.command = 'unknown-cmd'
         parser.username = 'username'
         parser.password = 'password'
@@ -237,19 +237,19 @@ class TestMainNodeParser(MainMock):
         parser.nodes_list = []
         parser.exclude_nodes_list = []
         self.assertRaises(ValueError,
-                          open_a8_parser.open_a8_parse_and_run, parser)
+                          open_linux_parser.open_linux_parse_and_run, parser)
 
-    @patch('iotlabsshcli.open_a8.reset_m3')
+    @patch('iotlabsshcli.open_linux.reset')
     @patch('iotlabcli.parser.common.list_nodes')
     @patch('iotlabcli.parser.common.print_result')
-    def test_reset_m3_jmespath(self, print_result, list_nodes, reset_m3):
-        """Run reset-m3 subparser function with jmespath options."""
-        reset_m3.return_value = {'result': 'test'}
+    def test_reset_jmespath(self, print_result, list_nodes, reset):
+        """Run reset subparser function with jmespath options."""
+        reset.return_value = {'result': 'test'}
         list_nodes.return_value = self._nodes
 
-        args = ['--jmespath=\'test\'', '--fmt=\'int\'', 'reset-m3',
+        args = ['--jmespath=\'test\'', '--fmt=\'int\'', 'reset',
                 '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
 
         print_result.assert_called_once()
         args, _ = print_result.call_args
@@ -258,8 +258,39 @@ class TestMainNodeParser(MainMock):
         self.assertTrue(isinstance(args[1], jmespath.parser.ParsedResult))
         self.assertEqual(args[2], 'int')
 
+        args = ['reset', '-l', 'saclay,a8,1-5']
+        open_linux_parser.main(args)
+        print_result.assert_called_once()
+        args, _ = print_result.call_args
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[0], {'result': 'test'})
+        self.assertEqual(args[1], None)
+        self.assertEqual(args[2], None)
+
+    @patch('iotlabsshcli.open_linux.reset')
+    @patch('iotlabsshcli.open_linux.flash')
+    @patch('iotlabcli.parser.common.list_nodes')
+    @patch('iotlabcli.parser.common.print_result')
+    def test_deprecated_parser(self, print_result, list_nodes, flash, reset):
+        """Run deprecated subparsers."""
+        reset.return_value = flash.return_value = {'result': 'test'}
+        list_nodes.return_value = self._nodes
+
+        # call deprecated subparser
+        args = ['reset-m3', '-h']
+        self.assertRaises(SystemExit, open_linux_parser.main, args)
+
+        args = ['flash-m3', 'firmware.elf', '-l', 'saclay,a8,1-5']
+        open_linux_parser.main(args)
+        print_result.assert_called_once()
+        args, _ = print_result.call_args
+        self.assertEqual(len(args), 3)
+        self.assertEqual(args[0], {'result': 'test'})
+        self.assertEqual(args[1], None)
+        self.assertEqual(args[2], None)
+
         args = ['reset-m3', '-l', 'saclay,a8,1-5']
-        open_a8_parser.main(args)
+        open_linux_parser.main(args)
         print_result.assert_called_once()
         args, _ = print_result.call_args
         self.assertEqual(len(args), 3)
