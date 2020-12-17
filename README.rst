@@ -53,7 +53,7 @@ Examples:
 ---------
 
 Start an experiment, wait for it to be ready, wait for all nodes boot:
-...................................................................
+......................................................................
 
 .. code-block::
 
@@ -87,7 +87,7 @@ Start an experiment, wait for it to be ready, wait for all nodes boot:
 **Note:** node-a8-4 and node-a8-8 are broken in Saclay.
 
 Flash a firmware on the co-microcontroller of the working nodes:
-...............................................
+................................................................
 
 .. code-block::
 
@@ -107,7 +107,7 @@ Flash a firmware on the co-microcontroller of the working nodes:
     }
 
 Reset the co-microcontroller of one node:
-............................
+.........................................
 
 .. code-block::
 
@@ -149,7 +149,7 @@ Use the *--verbose* option to get the commands output:
     }
 
 Run a command on two nodes:
-..............................
+...........................
 
 .. code-block::
 
@@ -182,7 +182,7 @@ Run a command on SSH frontend:
     }
 
 Copy file on SSH frontend homedir directory (~/shared/.iotlabsshcli):
-.................................................................
+.....................................................................
 
 .. code-block::
 

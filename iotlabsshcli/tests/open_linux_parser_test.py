@@ -258,15 +258,6 @@ class TestMainNodeParser(MainMock):
         self.assertTrue(isinstance(args[1], jmespath.parser.ParsedResult))
         self.assertEqual(args[2], 'int')
 
-        args = ['reset', '-l', 'saclay,a8,1-5']
-        open_linux_parser.main(args)
-        print_result.assert_called_once()
-        args, _ = print_result.call_args
-        self.assertEqual(len(args), 3)
-        self.assertEqual(args[0], {'result': 'test'})
-        self.assertEqual(args[1], None)
-        self.assertEqual(args[2], None)
-
     @patch('iotlabsshcli.open_linux.reset')
     @patch('iotlabsshcli.open_linux.flash')
     @patch('iotlabcli.parser.common.list_nodes')
@@ -282,7 +273,7 @@ class TestMainNodeParser(MainMock):
 
         args = ['flash-m3', 'firmware.elf', '-l', 'saclay,a8,1-5']
         open_linux_parser.main(args)
-        print_result.assert_called_once()
+        print_result.assert_called()
         args, _ = print_result.call_args
         self.assertEqual(len(args), 3)
         self.assertEqual(args[0], {'result': 'test'})
@@ -291,7 +282,7 @@ class TestMainNodeParser(MainMock):
 
         args = ['reset-m3', '-l', 'saclay,a8,1-5']
         open_linux_parser.main(args)
-        print_result.assert_called_once()
+        print_result.assert_called()
         args, _ = print_result.call_args
         self.assertEqual(len(args), 3)
         self.assertEqual(args[0], {'result': 'test'})

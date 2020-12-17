@@ -60,6 +60,7 @@ setup(
     version=get_version(PACKAGE),
     description='IoT-LAB testbed ssh command-line client',
     long_description=readme('README.rst'),
+    long_description_content_type='text/x-rst',
     author='IoT-LAB Team',
     author_email='admin@iot-lab.info',
     url='http://www.iot-lab.info',
