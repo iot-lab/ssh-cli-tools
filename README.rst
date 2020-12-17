@@ -2,7 +2,7 @@
 SSH CLI Tools
 =============
 
-|PyPI| |Travis| |Codecov|
+|PyPI| |CI| |Codecov|
 
 **SSH CLI Tools** provides a set of commands for interacting remotely and easily
 with IoT-Lab Linux nodes. See `here <https://www.iot-lab.info/docs/boards/iot-lab-a8-m3/>`_
@@ -238,9 +238,9 @@ you want to launch a script in background on the SSH frontend.
    :target: https://badge.fury.io/py/iotlabsshcli
    :alt: PyPI package status
 
-.. |Travis| image:: https://travis-ci.org/iot-lab/ssh-cli-tools.svg?branch=master
-   :target: https://travis-ci.org/iot-lab/ssh-cli-tools
-   :alt: Travis build status
+.. |CI| image:: https://github.com/iot-lab/ssh-cli-tools/workflows/CI/badge.svg
+    :target: https://github.com/iot-lab/ssh-cli-tools/actions?query=workflow%3ACI+branch%3Amaster
+    :alt: CI status
 
 .. |Codecov| image:: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/iot-lab/ssh-cli-tools/branch/master
