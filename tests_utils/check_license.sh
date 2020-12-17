@@ -16,7 +16,6 @@ files_list=$(echo "${files_list}" | grep -v \
     -e 'AUTHORS' \
     -e 'COPYING' \
     -e 'ssh_config' \
-    -e '.travis.yml' \
     -e 'codecov.yml' \
     -e '.github/workflows/continuous-integration.yml' \
     -e 'utils/iotlabsshcli-bash-completion.sh' \
