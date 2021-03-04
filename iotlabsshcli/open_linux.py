@@ -53,7 +53,7 @@ def _nodes_grouped(nodes):
 _FLASH_CMD = 'source /etc/profile && /usr/bin/iotlab_flash {}'
 _RESET_CMD = 'source /etc/profile && /usr/bin/iotlab_reset'
 _MAKE_EXECUTABLE_CMD = 'chmod +x {}'
-_RUN_SCRIPT_CMD = 'screen -S {screen} -dm bash -c \"{path}\"'
+_RUN_SCRIPT_CMD = 'source /etc/profile && screen -S {screen} -dm bash -c \"{path}\"'
 _QUIT_SCRIPT_CMD = 'screen -X -S {screen} quit'
 _REMOTE_SHARED_DIR = 'shared/.iotlabsshcli'
 
