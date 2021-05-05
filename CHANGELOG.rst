@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.1
+-----
+
++ load IPv6 environment variables before run script
+
 1.0.0
 -----
 
