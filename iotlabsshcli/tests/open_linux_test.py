@@ -60,7 +60,24 @@ def test_open_linux_flash(scp, run):
     assert ret == {'flash': return_value}
     scp.assert_called_once_with(firmware, remote_fw)
     assert run.call_count == 1
-    run.mock_calls[0].assert_called_with(_FLASH_CMD.format(remote_fw))
+    run.mock_calls[0].assert_called_with(
+        _FLASH_CMD.format(fw=remote_fw, bin="")
+    )
+
+    # Cover the case where a .bin firmware is used
+    scp.call_count = 0
+    run.call_count = 0
+    firmware = '/tmp/firmware.bin'
+    remote_fw = os.path.join('shared/.iotlabsshcli',
+                             os.path.basename(firmware))
+    ret = flash(config_ssh, _ROOT_NODES, firmware)
+
+    assert ret == {'flash': return_value}
+    scp.assert_called_once_with(firmware, remote_fw)
+    assert run.call_count == 1
+    run.mock_calls[0].assert_called_with(
+        _FLASH_CMD.format(fw=remote_fw, bin="--bin")
+    )
 
 
 @patch('iotlabsshcli.sshlib.OpenLinuxSsh.run')
