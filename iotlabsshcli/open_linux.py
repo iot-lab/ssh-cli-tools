@@ -50,7 +50,7 @@ def _nodes_grouped(nodes):
     return result
 
 
-_FLASH_CMD = 'source /etc/profile && /usr/bin/iotlab_flash {}'
+_FLASH_CMD = 'source /etc/profile && /usr/bin/iotlab_flash {fw} {bin}'
 _RESET_CMD = 'source /etc/profile && /usr/bin/iotlab_reset'
 _MAKE_EXECUTABLE_CMD = 'chmod +x {}'
 _RUN_SCRIPT_CMD = 'source /etc/profile && '
@@ -73,7 +73,8 @@ def flash(config_ssh, nodes, firmware, verbose=False):
     if '1' in result:
         failed_hosts = [ssh.groups.pop(res) for res in result['1']]
     # Run firmware update.
-    result = ssh.run(_FLASH_CMD.format(remote_fw))
+    bin_opt = "--bin" if remote_fw.endswith(".bin") else ""
+    result = ssh.run(_FLASH_CMD.format(fw=remote_fw, bin=bin_opt))
     for hosts in failed_hosts:
         result.setdefault('1', []).extend(hosts)
     return {"flash": result}
