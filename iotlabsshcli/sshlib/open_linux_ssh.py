@@ -202,9 +202,7 @@ class OpenLinuxSsh():
         else:
             client = ParallelSSHClient(hosts, user=user, pkey=SSH_KEY,
                                        timeout=timeout)
-        # pylint: disable=unexpected-keyword-arg
         output = client.run_command(command, stop_on_errors=False,
-                                    return_list=True,
                                     **kwargs)
         client.join(output)
         # output = pssh.output.HostOutput objects list
