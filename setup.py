@@ -57,7 +57,7 @@ DEPRECATED_SCRIPTS = ['open-a8-cli']
 
 SCRIPTS += DEPRECATED_SCRIPTS
 
-INSTALL_REQUIRES = ['argparse', 'iotlabcli>=2.0', 'parallel-ssh==2.5.4',
+INSTALL_REQUIRES = ['argparse', 'iotlabcli>=2.0', 'parallel-ssh>=2.5.4',
                     'scp', 'gevent>=1.1', 'psutil==5.7.0']
 
 setup(
@@ -75,7 +75,6 @@ setup(
     scripts=SCRIPTS,
     classifiers=['Development Status :: 5 - Production/Stable',
                  'Programming Language :: Python',
-                 'Programming Language :: Python :: 2',
                  'Programming Language :: Python :: 3',
                  'Intended Audience :: End Users/Desktop',
                  'Environment :: Console',
