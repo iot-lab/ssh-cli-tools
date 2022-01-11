@@ -1,6 +1,17 @@
 Changelog
 =========
 
+1.0.3
+-----
+
++ fix parallel-ssh version in setup.py (equal to 2.5.4) due to run command error
++ fix tox and lint errors
+
+1.0.2
+-----
+
++ allow to flash binary firmwares on co-controller
+
 1.0.1
 -----
 
