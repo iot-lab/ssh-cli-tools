@@ -171,7 +171,7 @@ def open_linux_parse_and_run(opts):
         nodes = _get_experiment_nodes_list(api, exp_id)
 
     # Only keep Linux nodes
-    nodes = ["node-{0}".format(node)
+    nodes = [f'node-{node}'
              for node in nodes
              if node.startswith('a8') or node.startswith('rpi3')]
 
@@ -213,7 +213,7 @@ def open_linux_parse_and_run(opts):
                                             verbose=opts.verbose)
 
     if res is None:
-        raise ValueError('Unknown command {0}'.format(command))
+        raise ValueError(f'Unknown command {command}')
 
     return res
 

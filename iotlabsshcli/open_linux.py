@@ -148,7 +148,7 @@ def run_script(config_ssh, nodes, script, run_on_frontend=False,
     failed_hosts = []
     groups = _nodes_grouped(nodes)
     ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
-    screen = '{user}-{exp_id}'.format(**config_ssh)
+    screen = f'{config_ssh["user"]}-{config_ssh["exp_id"]}'
     remote_script = os.path.join(_REMOTE_SHARED_DIR, os.path.basename(script))
     script_data = {'screen': screen, 'path': remote_script}
     # Copy script on SSH frontend servers
