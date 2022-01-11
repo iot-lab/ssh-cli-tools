@@ -23,10 +23,10 @@
 
 from pytest import mark
 from pssh.exceptions import SFTPError
+from mock import patch
 
 from iotlabsshcli.open_linux import _nodes_grouped
 from iotlabsshcli.sshlib import OpenLinuxSsh
-from .compat import patch
 from .open_linux_test import _SACLAY_NODES, _GRENOBLE_NODES, _ROOT_NODES
 
 
@@ -76,8 +76,7 @@ def test_run(join, run_command, run_on_frontend):
         assert ret == {'0': _SACLAY_NODES,
                        '1': _GRENOBLE_NODES}
     assert run_command.call_count == len(groups)
-    run_command.assert_called_with(test_command, stop_on_errors=False,
-                                   return_list=True)
+    run_command.assert_called_with(test_command, stop_on_errors=False)
 
 
 @patch('pssh.clients.SSHClient._init')
@@ -127,11 +126,9 @@ def test_wait_all_boot(join, run_command):
 
     node_ssh.wait(120)
     assert run_command.call_count == 2
-    run_command.assert_called_with('uptime', stop_on_errors=False,
-                                   return_list=True)
+    run_command.assert_called_with('uptime', stop_on_errors=False)
     run_command.reset_mock()
 
     node_ssh.run(test_command)
     assert run_command.call_count == 2
-    run_command.assert_called_with(test_command, stop_on_errors=False,
-                                   return_list=True)
+    run_command.assert_called_with(test_command, stop_on_errors=False)

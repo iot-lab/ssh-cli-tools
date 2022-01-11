@@ -20,7 +20,6 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-from __future__ import print_function
 import os
 import time
 import pssh
@@ -202,9 +201,7 @@ class OpenLinuxSsh():
         else:
             client = ParallelSSHClient(hosts, user=user, pkey=SSH_KEY,
                                        timeout=timeout)
-        # pylint: disable=unexpected-keyword-arg
         output = client.run_command(command, stop_on_errors=False,
-                                    return_list=True,
                                     **kwargs)
         client.join(output)
         # output = pssh.output.HostOutput objects list
