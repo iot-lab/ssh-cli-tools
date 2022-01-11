@@ -23,12 +23,10 @@
 
 import sys
 import unittest
+from mock import patch, Mock
 
 from iotlabcli.rest import Api
 from iotlabcli.helpers import json_dumps
-
-from .compat import patch, Mock
-
 
 API_RET = {"result": "test"}
 

@@ -23,17 +23,17 @@
 
 import os.path
 from pytest import mark
+from mock import patch
 
 from iotlabsshcli.open_linux import reset, flash, wait_for_boot, run_script
 from iotlabsshcli.open_linux import run_cmd, copy_file
 from iotlabsshcli.open_linux import (_RESET_CMD, _FLASH_CMD,
                                      _RUN_SCRIPT_CMD,
                                      _QUIT_SCRIPT_CMD, _MAKE_EXECUTABLE_CMD)
-from .compat import patch
 
-_SACLAY_NODES = ['node-a8-{}.saclay.iot-lab.info'.format(n)
+_SACLAY_NODES = [f'node-a8-{n}.saclay.iot-lab.info'
                  for n in range(1, 6)]
-_GRENOBLE_NODES = ['node-a8-{}.grenoble.iot-lab.info'.format(n)
+_GRENOBLE_NODES = [f'node-a8-{n}.grenoble.iot-lab.info'
                    for n in range(1, 4)]
 _ROOT_NODES = _SACLAY_NODES + _GRENOBLE_NODES
 

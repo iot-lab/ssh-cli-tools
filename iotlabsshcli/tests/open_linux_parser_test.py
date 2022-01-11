@@ -22,11 +22,10 @@
 """Tests for iotlabsshcli.parser.open_linux package."""
 
 import jmespath
+from mock import patch, Mock
 
 from iotlabsshcli.parser import open_linux_parser
-
 from .iotlabsshcli_mock import MainMock
-from .compat import patch, Mock
 
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-few-public-methods
@@ -35,8 +34,8 @@ from .compat import patch, Mock
 class TestMainNodeParser(MainMock):
     """Test open-linux-cli main parser."""
 
-    _nodes = ['a8-{0}.saclay.iot-lab.info'.format(i) for i in range(1, 6)]
-    _root_nodes = ['node-{0}'.format(node) for node in _nodes]
+    _nodes = [f'a8-{i}.saclay.iot-lab.info' for i in range(1, 6)]
+    _root_nodes = [f'node-{node}' for node in _nodes]
 
     @patch('iotlabsshcli.open_linux.flash')
     @patch('iotlabcli.parser.common.list_nodes')
