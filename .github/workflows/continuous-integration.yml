@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: [2.7, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@master
@@ -44,7 +44,7 @@ jobs:
         tox -e py$(echo ${{ matrix.python-version }} | tr -d .)-lint
         tox -e copying
     - name: Upload coverage to Codecov
-      if: ${{ (matrix.python-version == 3.8 || matrix.python-version == 2.7) }}
+      if: ${{ matrix.python-version == 3.8 }}
       uses: codecov/codecov-action@v1
       with:
         fail_ci_if_error: true
