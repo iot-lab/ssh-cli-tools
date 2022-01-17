@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.1.0
+-----
+
+- drop Python 2 support, versions supported are now 3.7+
+- remove deprecated return_list parameter from run_command call
++ set parallel-ssh version supported to >= 2.5.4
+
 1.0.3
 -----
 
