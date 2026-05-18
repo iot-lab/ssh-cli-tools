@@ -1,6 +1,3 @@
-# -*- coding:utf-8 -*-
-"""iotlabsshcli package implementing a ssh cli for iotlab."""
-
 # This file is a part of IoT-LAB ssh-cli-tools
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
 # Contributor(s) : see AUTHORS file
@@ -20,4 +17,13 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-__version__ = "1.1.0"
+"""Deprecated entry points kept for backward compatibility."""
+
+from iotlabcli.helpers import deprecate_cmd
+
+from iotlabsshcli.parser.open_linux_parser import main as _main
+
+
+def open_a8_cli():
+    """Entry point for the deprecated open-a8-cli command."""
+    deprecate_cmd(_main, "open-a8-cli", "iotlab-ssh")
