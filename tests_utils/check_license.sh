@@ -9,7 +9,6 @@ files_list=$(git ls-tree -r HEAD --full-tree --name-only)
 files_list=$(echo "${files_list}" | grep -v \
     -e 'tests_utils/' \
     -e '.gitignore' \
-    -e 'setup.cfg' \
     -e 'tox.ini' \
     -e '.md$' \
     -e '.rst$' \
@@ -19,6 +18,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e 'codecov.yml' \
     -e '.github/workflows/continuous-integration.yml' \
     -e 'utils/iotlabsshcli-bash-completion.sh' \
+    -e 'pyproject.toml' \
 )
 
 # Verify that 'AUTHORS' and 'COPYING' files exist

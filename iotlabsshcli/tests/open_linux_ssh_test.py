@@ -21,13 +21,15 @@
 
 """Tests for iotlabsshcli.open_linux package."""
 
-from pytest import mark
+from unittest.mock import patch
+
 from pssh.exceptions import SFTPError
-from mock import patch
+from pytest import mark
 
 from iotlabsshcli.open_linux import _nodes_grouped
 from iotlabsshcli.sshlib import OpenLinuxSsh
-from .open_linux_test import _SACLAY_NODES, _GRENOBLE_NODES, _ROOT_NODES
+
+from .open_linux_test import _GRENOBLE_NODES, _ROOT_NODES, _SACLAY_NODES
 
 
 # pylint: disable=too-few-public-methods
@@ -37,96 +39,94 @@ class HostOutput:
     ParallelSSH run_command returns a list of pssh.output.HostOutput
     objects since version 2.0.0.
     """
+
     def __init__(self, host=None, stdout=None, exit_code=None):
         self.host = host
         self.stdout = stdout
         self.exit_code = exit_code
 
 
-@mark.parametrize('run_on_frontend', [False, True])
-@patch('pssh.clients.ParallelSSHClient.run_command')
-@patch('pssh.clients.ParallelSSHClient.join')
+@mark.parametrize("run_on_frontend", [False, True])
+@patch("pssh.clients.ParallelSSHClient.run_command")
+@patch("pssh.clients.ParallelSSHClient.join")
 def test_run(join, run_command, run_on_frontend):
     # pylint: disable=unused-argument
     """Test running commands on ssh nodes."""
     config_ssh = {
-        'user': 'username',
-        'exp_id': 123,
+        "user": "username",
+        "exp_id": 123,
     }
 
-    test_command = 'test'
+    test_command = "test"
     groups = _nodes_grouped(_ROOT_NODES)
 
     node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
     # Print output of run_command
     if run_on_frontend:
-        output = [HostOutput('saclay.iot-lab.info', 'test', 0),
-                  HostOutput()]
+        output = [HostOutput("saclay.iot-lab.info", "test", 0), HostOutput()]
     else:
-        output = [HostOutput(host, 'test', 1) for host in _GRENOBLE_NODES]
-        output.extend([HostOutput(host, 'test', 0) for host in _SACLAY_NODES])
+        output = [HostOutput(host, "test", 1) for host in _GRENOBLE_NODES]
+        output.extend([HostOutput(host, "test", 0) for host in _SACLAY_NODES])
     run_command.return_value = output
 
     ret = node_ssh.run(test_command, with_proxy=not run_on_frontend)
     if run_on_frontend:
-        assert ret == {'0': ['saclay.iot-lab.info'],
-                       '1': ['grenoble.iot-lab.info']}
+        assert ret == {"0": ["saclay.iot-lab.info"], "1": ["grenoble.iot-lab.info"]}
     else:
-        assert ret == {'0': _SACLAY_NODES,
-                       '1': _GRENOBLE_NODES}
+        assert ret == {"0": _SACLAY_NODES, "1": _GRENOBLE_NODES}
     assert run_command.call_count == len(groups)
     run_command.assert_called_with(test_command, stop_on_errors=False)
 
 
-@patch('pssh.clients.SSHClient._init')
-@patch('pssh.clients.SSHClient.copy_file')
+@patch("pssh.clients.SSHClient._init")
+@patch("pssh.clients.SSHClient.copy_file")
 def test_scp(copy_file, init):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
-        'user': 'username',
-        'exp_id': 123,
+        "user": "username",
+        "exp_id": 123,
     }
 
-    src = 'test_src'
-    dst = 'test_dst'
+    src = "test_src"
+    dst = "test_dst"
 
     groups = _nodes_grouped(_ROOT_NODES)
 
     node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
     ret = node_ssh.scp(src, dst)
     assert copy_file.call_count == 2
-    assert ret == {'0': ['saclay.iot-lab.info', 'grenoble.iot-lab.info']}
+    assert ret == {"0": ["saclay.iot-lab.info", "grenoble.iot-lab.info"]}
 
     copy_file.side_effect = SFTPError()
     ret = node_ssh.scp(src, dst)
 
-    assert ret == {'1': ['saclay.iot-lab.info', 'grenoble.iot-lab.info']}
+    assert ret == {"1": ["saclay.iot-lab.info", "grenoble.iot-lab.info"]}
 
 
-@patch('pssh.clients.ParallelSSHClient.run_command')
-@patch('pssh.clients.ParallelSSHClient.join')
+@patch("pssh.clients.ParallelSSHClient.run_command")
+@patch("pssh.clients.ParallelSSHClient.join")
 def test_wait_all_boot(join, run_command):
     # pylint: disable=unused-argument
     """Test wait for ssh nodes to be available."""
     config_ssh = {
-        'user': 'username',
-        'exp_id': 123,
+        "user": "username",
+        "exp_id": 123,
     }
 
-    test_command = 'test'
+    test_command = "test"
     groups = _nodes_grouped(_ROOT_NODES)
 
     # normal boot
     node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
-    output = [HostOutput(host, 'test', 0) for host in _ROOT_NODES]
+    output = [HostOutput(host, "test", 0) for host in _ROOT_NODES]
     run_command.return_value = output
 
     node_ssh.wait(120)
     assert run_command.call_count == 2
-    run_command.assert_called_with('uptime', stop_on_errors=False)
+    run_command.assert_called_with("uptime", stop_on_errors=False)
     run_command.reset_mock()
 
     node_ssh.run(test_command)

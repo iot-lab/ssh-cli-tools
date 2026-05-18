@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "iotlabsshcli"
+dynamic = ["version"]
+description = "IoT-LAB testbed ssh command-line client"
+readme = "README.rst"
+license = {text = "CeCILL v2.1"}
+authors = [
+    {name = "IoT-LAB Team", email = "admin@iot-lab.info"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: End Users/Desktop",
+    "Environment :: Console",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "iotlabcli>=2.0",
+    "parallel-ssh>=2.5.4",
+    "scp",
+    "gevent>=1.1",
+    "psutil==5.7.0",
+]
+
+[project.urls]
+Homepage = "http://www.iot-lab.info"
+"Source Code" = "http://github.com/iot-lab/ssh-cli-tools/"
+
+[project.scripts]
+iotlab-ssh = "iotlabsshcli.parser.open_linux_parser:main"
+open-a8-cli = "iotlabsshcli._deprecated:open_a8_cli"
+
+[tool.hatch.version]
+path = "iotlabsshcli/__init__.py"
+
+[tool.pytest.ini_options]
+addopts = [
+    "-v",
+    "--doctest-modules",
+    "--cov", "iotlabsshcli",
+    "--cov-report=term-missing",
+    "--cov-report=term",
+    "--cov-report=xml",
+]
+testpaths = ["iotlabsshcli"]
+
+[tool.pylint.messages_control]
+disable = ["unspecified-encoding"]
+
+[tool.pylint.format]
+msg-template = "{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
+
+[tool.pylint.reports]
+reports = false
+
+[tool.ruff]
+line-length = 99
+target-version = "py310"
+exclude = [".tox", "dist", "build", "*.egg"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["iotlabsshcli"]

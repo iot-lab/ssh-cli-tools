@@ -22,6 +22,7 @@
 
 import os.path
 from collections import OrderedDict
+
 from iotlabsshcli.sshlib import OpenLinuxSsh
 
 
@@ -29,20 +30,19 @@ def _nodes_grouped(nodes):
     """Group nodes per site from a list of nodes.
     >>> _nodes_grouped([])
     OrderedDict()
-    >>> _nodes_grouped(['node-a8-1.grenoble.iot-lab.info',
-    ...                 'node-a8-2.grenoble.iot-lab.info',
-    ...                 'node-a8-2.saclay.iot-lab.info',
-    ...                 'node-a8-2.lille.iot-lab.info'])
+    >>> list(_nodes_grouped(['node-a8-1.grenoble.iot-lab.info',
+    ...                      'node-a8-2.grenoble.iot-lab.info',
+    ...                      'node-a8-2.saclay.iot-lab.info',
+    ...                      'node-a8-2.lille.iot-lab.info']).items())
     ... # doctest: +NORMALIZE_WHITESPACE
-    OrderedDict([('grenoble.iot-lab.info',
-                  ['node-a8-1.grenoble.iot-lab.info',
-                   'node-a8-2.grenoble.iot-lab.info']),
-                 ('saclay.iot-lab.info', ['node-a8-2.saclay.iot-lab.info']),
-                 ('lille.iot-lab.info', ['node-a8-2.lille.iot-lab.info'])])
+    [('grenoble.iot-lab.info',
+      ['node-a8-1.grenoble.iot-lab.info', 'node-a8-2.grenoble.iot-lab.info']),
+     ('saclay.iot-lab.info', ['node-a8-2.saclay.iot-lab.info']),
+     ('lille.iot-lab.info', ['node-a8-2.lille.iot-lab.info'])]
     """
     result = OrderedDict()
     for host in nodes:
-        site = host.split('.', 1)[1]
+        site = host.split(".", 1)[1]
         if site not in result:
             result.update({site: [host]})
         else:
@@ -50,17 +50,16 @@ def _nodes_grouped(nodes):
     return result
 
 
-_FLASH_CMD = 'source /etc/profile && /usr/bin/iotlab_flash {fw} {bin}'
-_RESET_CMD = 'source /etc/profile && /usr/bin/iotlab_reset'
-_MAKE_EXECUTABLE_CMD = 'chmod +x {}'
-_RUN_SCRIPT_CMD = 'source /etc/profile && '
-_RUN_SCRIPT_CMD += 'screen -S {screen} -dm bash -c \"{path}\"'
-_QUIT_SCRIPT_CMD = 'screen -X -S {screen} quit'
-_REMOTE_SHARED_DIR = 'shared/.iotlabsshcli'
+_FLASH_CMD = "source /etc/profile && /usr/bin/iotlab_flash {fw} {bin}"
+_RESET_CMD = "source /etc/profile && /usr/bin/iotlab_reset"
+_MAKE_EXECUTABLE_CMD = "chmod +x {}"
+_RUN_SCRIPT_CMD = 'source /etc/profile && screen -S {screen} -dm bash -c "{path}"'
+_QUIT_SCRIPT_CMD = "screen -X -S {screen} quit"
+_REMOTE_SHARED_DIR = "shared/.iotlabsshcli"
 
 
 def flash(config_ssh, nodes, firmware, verbose=False):
-    """Flash the firmware of co-microcontroller """
+    """Flash the firmware of co-microcontroller"""
     failed_hosts = []
     # configure ssh and remote firmware names.
     groups = _nodes_grouped(nodes)
@@ -70,18 +69,18 @@ def flash(config_ssh, nodes, firmware, verbose=False):
     # scp create remote directory if it doesn't exist
     result = ssh.scp(firmware, remote_fw)
     # We delete failed hosts for the next command
-    if '1' in result:
-        failed_hosts = [ssh.groups.pop(res) for res in result['1']]
+    if "1" in result:
+        failed_hosts = [ssh.groups.pop(res) for res in result["1"]]
     # Run firmware update.
     bin_opt = "--bin" if remote_fw.endswith(".bin") else ""
     result = ssh.run(_FLASH_CMD.format(fw=remote_fw, bin=bin_opt))
     for hosts in failed_hosts:
-        result.setdefault('1', []).extend(hosts)
+        result.setdefault("1", []).extend(hosts)
     return {"flash": result}
 
 
 def reset(config_ssh, nodes, verbose=False):
-    """Reset co-microcontroller """
+    """Reset co-microcontroller"""
 
     # Configure ssh
     groups = _nodes_grouped(nodes)
@@ -91,7 +90,7 @@ def reset(config_ssh, nodes, verbose=False):
 
 
 def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
-    """Wait for the open Linux nodes boot """
+    """Wait for the open Linux nodes boot"""
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -101,7 +100,7 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
 
 
 def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
-    """Run a command on the Linux nodes or SSH frontend servers """
+    """Run a command on the Linux nodes or SSH frontend servers"""
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -110,7 +109,7 @@ def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
 
 
 def copy_file(config_ssh, nodes, file_path, verbose=False):
-    """Copy a file to SSH frontend servers """
+    """Copy a file to SSH frontend servers"""
 
     # Configure ssh.
     groups = _nodes_grouped(nodes)
@@ -127,45 +126,41 @@ def _get_failed_result(groups, result, run_on_frontend):
     We delete failed hosts for the next commands in the groups
     """
     failed = []
-    if '1' in result and result['1']:
+    if "1" in result and result["1"]:
         if not run_on_frontend:
             # nodes list
-            for site in result['1']:
+            for site in result["1"]:
                 failed.extend(groups[site])
                 del groups[site]
         else:
             # servers list
-            failed.extend(result['1'])
-            all(map(groups.pop, result['1']))
+            failed.extend(result["1"])
+            all(map(groups.pop, result["1"]))
     return failed
 
 
-def run_script(config_ssh, nodes, script, run_on_frontend=False,
-               verbose=False):
-    """Run a script in background on Linux nodes or SSH frontend servers """
+def run_script(config_ssh, nodes, script, run_on_frontend=False, verbose=False):
+    """Run a script in background on Linux nodes or SSH frontend servers"""
 
     # Configure ssh.
     failed_hosts = []
     groups = _nodes_grouped(nodes)
     ssh = OpenLinuxSsh(config_ssh, groups, verbose=verbose)
-    screen = f'{config_ssh["user"]}-{config_ssh["exp_id"]}'
+    screen = f"{config_ssh['user']}-{config_ssh['exp_id']}"
     remote_script = os.path.join(_REMOTE_SHARED_DIR, os.path.basename(script))
-    script_data = {'screen': screen, 'path': remote_script}
+    script_data = {"screen": screen, "path": remote_script}
     # Copy script on SSH frontend servers
     scp_result = ssh.scp(script, remote_script)
-    failed_hosts.append(_get_failed_result(ssh.groups, scp_result,
-                                           run_on_frontend))
+    failed_hosts.append(_get_failed_result(ssh.groups, scp_result, run_on_frontend))
     # Make script executable
-    run_result = ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script),
-                         with_proxy=False)
-    failed_hosts.append(_get_failed_result(ssh.groups, run_result,
-                                           run_on_frontend))
+    run_result = ssh.run(_MAKE_EXECUTABLE_CMD.format(remote_script), with_proxy=False)
+    failed_hosts.append(_get_failed_result(ssh.groups, run_result, run_on_frontend))
     # Try cleanup and kill any running script (don't check the result)
-    ssh.run(_QUIT_SCRIPT_CMD.format(**script_data),
-            with_proxy=not run_on_frontend)
+    ssh.run(_QUIT_SCRIPT_CMD.format(**script_data), with_proxy=not run_on_frontend)
     # Run script
-    result = ssh.run(_RUN_SCRIPT_CMD.format(**script_data),
-                     with_proxy=not run_on_frontend, use_pty=False)
+    result = ssh.run(
+        _RUN_SCRIPT_CMD.format(**script_data), with_proxy=not run_on_frontend, use_pty=False
+    )
     for hosts in filter(None, failed_hosts):
-        result.setdefault('1', []).extend(hosts)
+        result.setdefault("1", []).extend(hosts)
     return {"run-script": result}
