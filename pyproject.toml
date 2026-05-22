@@ -21,11 +21,11 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "iotlabcli>=2.0",
-    "parallel-ssh>=2.5.4",
-    "scp",
-    "gevent>=1.1",
-    "psutil==5.7.0",
+    "iotlabcli>=3.0.0",
+    "parallel-ssh>=2.16.0",
+    "scp>=0.15.0",
+    "gevent>=26.5.0",
+    "psutil>=7.2.2",
 ]
 
 [project.urls]
