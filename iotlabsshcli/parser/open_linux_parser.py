@@ -22,6 +22,7 @@
 
 import argparse
 import sys
+from typing import Any
 
 from iotlabcli import auth, helpers, rest
 from iotlabcli.helpers import deprecate_warn_cmd
@@ -31,7 +32,7 @@ from iotlabcli.parser.common import _get_experiment_nodes_list
 import iotlabsshcli.open_linux
 
 
-def parse_options():
+def parse_options() -> argparse.ArgumentParser:
     """Parse command line option."""
     parent_parser = argparse.ArgumentParser(add_help=False)
     common.add_auth_arguments(parent_parser, False)
@@ -54,7 +55,7 @@ def parse_options():
     class DeprecateHelpFormatter(argparse.HelpFormatter):
         """Add drepecated help formatter"""
 
-        def add_usage(self, usage, actions, groups, prefix=None):
+        def add_usage(self, usage, actions, groups, prefix=None) -> None:  # type: ignore[override]
             # self._prog = iotlab-ssh flash-m3 | reset-m3
             old_cmd = self._prog.split()[-1]
             new_cmd = old_cmd.split("-")[0]
@@ -142,7 +143,7 @@ def parse_options():
     return parser
 
 
-def open_linux_parse_and_run(opts):
+def open_linux_parse_and_run(opts: argparse.Namespace) -> dict[str, Any]:
     """Parse namespace 'opts' object."""
     user, passwd = auth.get_user_credentials(opts.username, opts.password)
     api = rest.Api(user, passwd)
@@ -194,7 +195,7 @@ def open_linux_parse_and_run(opts):
     return res
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> None:
     """Open Linux SSH cli parser."""
     args = args or sys.argv[1:]  # required for easy testing.
     parser = parse_options()

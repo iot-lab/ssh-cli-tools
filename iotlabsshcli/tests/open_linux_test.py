@@ -22,6 +22,7 @@
 """Tests for iotlabsshcli.open_linux package."""
 
 import os.path
+from typing import Any
 from unittest.mock import patch
 
 from pytest import mark
@@ -47,7 +48,7 @@ _ROOT_NODES = _SACLAY_NODES + _GRENOBLE_NODES
 
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.run")
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.scp")
-def test_open_linux_flash(scp, run):
+def test_open_linux_flash(scp: Any, run: Any) -> None:
     """Test flashing a firmware."""
     config_ssh = {
         "user": "username",
@@ -81,7 +82,7 @@ def test_open_linux_flash(scp, run):
 
 
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.run")
-def test_open_linux_reset(run):
+def test_open_linux_reset(run: Any) -> None:
     """Test resetting co-microcontroller."""
     config_ssh = {
         "user": "username",
@@ -97,7 +98,7 @@ def test_open_linux_reset(run):
 
 
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.wait")
-def test_open_linux_wait_for_boot(wait):
+def test_open_linux_wait_for_boot(wait: Any) -> None:
     """Test wait for Linux boot."""
     config_ssh = {
         "user": "username",
@@ -115,7 +116,7 @@ def test_open_linux_wait_for_boot(wait):
 @mark.parametrize("run_on_frontend", [False, True])
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.run")
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.scp")
-def test_open_linux_run_script(scp, run, run_on_frontend):
+def test_open_linux_run_script(scp: Any, run: Any, run_on_frontend: bool) -> None:
     """Test run script on Linux nodes."""
     config_ssh = {
         "user": "username",
@@ -154,7 +155,7 @@ def test_open_linux_run_script(scp, run, run_on_frontend):
 
 
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.scp")
-def test_open_linux_copy_file(scp):
+def test_open_linux_copy_file(scp: Any) -> None:
     """Test copy file on the SSH frontend."""
     config_ssh = {
         "user": "username",
@@ -173,7 +174,7 @@ def test_open_linux_copy_file(scp):
 
 @mark.parametrize("run_on_frontend", [False, True])
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.run")
-def test_open_linux_run_cmd(run, run_on_frontend):
+def test_open_linux_run_cmd(run: Any, run_on_frontend: bool) -> None:
     """Test run command on Linux nodes."""
     config_ssh = {
         "user": "username",

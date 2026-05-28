@@ -23,6 +23,7 @@
 
 import sys
 import unittest
+from typing import Any
 from unittest.mock import Mock, patch
 
 from iotlabcli.helpers import json_dumps
@@ -34,14 +35,14 @@ API_RET = {"result": "test"}
 class RequestRet:  # pylint:disable=too-few-public-methods
     """Mock of Request return value"""
 
-    def __init__(self, status_code, content, headers=None):
+    def __init__(self, status_code: int, content: str, headers: Any = None) -> None:
         self.status_code = status_code
         self.content = content.encode("utf-8")
         self.headers = headers
         self.text = self.content.decode("utf-8")
 
 
-def api_mock(ret=None):
+def api_mock(ret: dict[str, Any] | None = None) -> Mock:
     """Return a mock of an api object
     returned value for api methods will be 'ret' parameter or API_RET
     """
@@ -53,7 +54,7 @@ def api_mock(ret=None):
     return api_class.return_value
 
 
-def api_mock_stop():
+def api_mock_stop() -> None:
     """Stop all patches started by api_mock.
     Actually it stops everything but not a problem"""
     patch.stopall()
@@ -62,7 +63,7 @@ def api_mock_stop():
 class MainMock(unittest.TestCase):
     """Common mock needed for testing main function of parsers"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.api = api_mock()
 
         patch("sys.stderr", sys.stdout).start()
@@ -75,11 +76,11 @@ class MainMock(unittest.TestCase):
             "iotlabcli.auth.get_user_credentials", Mock(return_value=("username", "password"))
         ).start()
 
-        def get_exp(_, x, running_only=True):
+        def get_exp(_: Any, x: int | None, running_only: bool = True) -> int:
             return x if x is not None else (123 if running_only else 234)
 
         patch("iotlabcli.helpers.get_current_experiment", get_exp).start()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         api_mock_stop()
         patch.stopall()

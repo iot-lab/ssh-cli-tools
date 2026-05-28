@@ -22,11 +22,12 @@
 
 import os.path
 from collections import OrderedDict
+from typing import Any
 
 from iotlabsshcli.sshlib import OpenLinuxSsh
 
 
-def _nodes_grouped(nodes):
+def _nodes_grouped(nodes: list[str]) -> OrderedDict[str, list[str]]:
     """Group nodes per site from a list of nodes.
     >>> _nodes_grouped([])
     OrderedDict()
@@ -58,7 +59,9 @@ _QUIT_SCRIPT_CMD = "screen -X -S {screen} quit"
 _REMOTE_SHARED_DIR = "shared/.iotlabsshcli"
 
 
-def flash(config_ssh, nodes, firmware, verbose=False):
+def flash(
+    config_ssh: dict[str, Any], nodes: list[str], firmware: str, verbose: bool = False
+) -> dict[str, Any]:
     """Flash the firmware of co-microcontroller"""
     failed_hosts = []
     # configure ssh and remote firmware names.
@@ -79,7 +82,7 @@ def flash(config_ssh, nodes, firmware, verbose=False):
     return {"flash": result}
 
 
-def reset(config_ssh, nodes, verbose=False):
+def reset(config_ssh: dict[str, Any], nodes: list[str], verbose: bool = False) -> dict[str, Any]:
     """Reset co-microcontroller"""
 
     # Configure ssh
@@ -89,7 +92,9 @@ def reset(config_ssh, nodes, verbose=False):
     return {"reset": ssh.run(_RESET_CMD)}
 
 
-def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
+def wait_for_boot(
+    config_ssh: dict[str, Any], nodes: list[str], max_wait: int = 120, verbose: bool = False
+) -> dict[str, Any]:
     """Wait for the open Linux nodes boot"""
 
     # Configure ssh.
@@ -99,7 +104,13 @@ def wait_for_boot(config_ssh, nodes, max_wait=120, verbose=False):
     return {"wait-for-boot": ssh.wait(max_wait)}
 
 
-def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
+def run_cmd(
+    config_ssh: dict[str, Any],
+    nodes: list[str],
+    cmd: str,
+    run_on_frontend: bool = False,
+    verbose: bool = False,
+) -> dict[str, Any]:
     """Run a command on the Linux nodes or SSH frontend servers"""
 
     # Configure ssh.
@@ -108,7 +119,9 @@ def run_cmd(config_ssh, nodes, cmd, run_on_frontend=False, verbose=False):
     return {"run-cmd": ssh.run(cmd, with_proxy=not run_on_frontend)}
 
 
-def copy_file(config_ssh, nodes, file_path, verbose=False):
+def copy_file(
+    config_ssh: dict[str, Any], nodes: list[str], file_path: str, verbose: bool = False
+) -> dict[str, Any]:
     """Copy a file to SSH frontend servers"""
 
     # Configure ssh.
@@ -120,7 +133,9 @@ def copy_file(config_ssh, nodes, file_path, verbose=False):
     return {"copy-file": result}
 
 
-def _get_failed_result(groups, result, run_on_frontend):
+def _get_failed_result(
+    groups: OrderedDict[str, list[str]], result: dict[str, list[str]], run_on_frontend: bool
+) -> list[str]:
     """Returns failed nodes or SSH frontend servers list.
 
     We delete failed hosts for the next commands in the groups
@@ -139,7 +154,13 @@ def _get_failed_result(groups, result, run_on_frontend):
     return failed
 
 
-def run_script(config_ssh, nodes, script, run_on_frontend=False, verbose=False):
+def run_script(
+    config_ssh: dict[str, Any],
+    nodes: list[str],
+    script: str,
+    run_on_frontend: bool = False,
+    verbose: bool = False,
+) -> dict[str, Any]:
     """Run a script in background on Linux nodes or SSH frontend servers"""
 
     # Configure ssh.
