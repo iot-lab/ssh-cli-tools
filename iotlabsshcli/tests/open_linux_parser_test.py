@@ -21,6 +21,7 @@
 
 """Tests for iotlabsshcli.parser.open_linux package."""
 
+from typing import Any
 from unittest.mock import Mock, patch
 
 import jmespath
@@ -43,7 +44,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.flash")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_flash(self, list_nodes, flash):
+    def test_main_flash(self, list_nodes: Any, flash: Any) -> None:
         """Run the parser.node.main with update subparser function."""
 
         flash.return_value = {"result": "test"}
@@ -71,7 +72,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.reset")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_reset(self, list_nodes, reset):
+    def test_main_reset(self, list_nodes: Any, reset: Any) -> None:
         """Run the parser.node.main with reset subparser function."""
         reset.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -95,7 +96,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.wait_for_boot")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_wait_for_boot(self, list_nodes, wait_for_boot):
+    def test_main_wait_for_boot(self, list_nodes: Any, wait_for_boot: Any) -> None:
         """Run the parser.node.main with wait-for-boot subparser function."""
         wait_for_boot.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -126,7 +127,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.run_script")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_run_script(self, list_nodes, run_script):
+    def test_main_run_script(self, list_nodes: Any, run_script: Any) -> None:
         """Run the parser.node.main with run-script subparser function."""
         run_script.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -165,7 +166,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.run_cmd")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_run_cmd(self, list_nodes, run_cmd):
+    def test_main_run_cmd(self, list_nodes: Any, run_cmd: Any) -> None:
         """Run the parser.node.main with run-cmd subparser function."""
         run_cmd.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -200,7 +201,7 @@ class TestMainNodeParser(MainMock):
 
     @patch("iotlabsshcli.open_linux.copy_file")
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_main_copy_file(self, list_nodes, copy_file):
+    def test_main_copy_file(self, list_nodes: Any, copy_file: Any) -> None:
         """Run the parser.node.main with copy-file subparser function."""
         copy_file.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -222,13 +223,13 @@ class TestMainNodeParser(MainMock):
                 {"user": "username", "exp_id": 123}, self._root_nodes, "script.sh", verbose=False
             )
 
-    def test_main_unknown_function(self):
+    def test_main_unknown_function(self) -> None:
         """Run the parser.node.main with an unknown function."""
         args = ["unknown-cmd"]
         self.assertRaises(SystemExit, open_linux_parser.main, args)
 
     @patch("iotlabcli.parser.common.list_nodes")
-    def test_run_unknown_function(self, list_nodes):
+    def test_run_unknown_function(self, list_nodes: Any) -> None:
         # pylint:disable=unused-argument
         """Run the parser.node.main with an unknown function."""
         parser = open_linux_parser.parse_options()
@@ -243,7 +244,7 @@ class TestMainNodeParser(MainMock):
     @patch("iotlabsshcli.open_linux.reset")
     @patch("iotlabcli.parser.common.list_nodes")
     @patch("iotlabcli.parser.common.print_result")
-    def test_reset_jmespath(self, print_result, list_nodes, reset):
+    def test_reset_jmespath(self, print_result: Any, list_nodes: Any, reset: Any) -> None:
         """Run reset subparser function with jmespath options."""
         reset.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -262,7 +263,9 @@ class TestMainNodeParser(MainMock):
     @patch("iotlabsshcli.open_linux.flash")
     @patch("iotlabcli.parser.common.list_nodes")
     @patch("iotlabcli.parser.common.print_result")
-    def test_deprecated_parser(self, print_result, list_nodes, flash, reset):
+    def test_deprecated_parser(
+        self, print_result: Any, list_nodes: Any, flash: Any, reset: Any
+    ) -> None:
         """Run deprecated subparsers."""
         reset.return_value = flash.return_value = {"result": "test"}
         list_nodes.return_value = self._nodes
@@ -290,7 +293,7 @@ class TestMainNodeParser(MainMock):
         self.assertEqual(args[2], None)
 
     @patch("iotlabsshcli._deprecated.deprecate_cmd")
-    def test_open_a8_cli_entry_point(self, mock_deprecate):
+    def test_open_a8_cli_entry_point(self, mock_deprecate: Any) -> None:
         """open_a8_cli entry point delegates to deprecate_cmd."""
         open_a8_cli()
         mock_deprecate.assert_called_once_with(_deprecated_main, "open-a8-cli", "iotlab-ssh")

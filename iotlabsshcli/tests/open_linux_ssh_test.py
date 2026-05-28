@@ -22,6 +22,7 @@
 """Tests for iotlabsshcli.open_linux package."""
 
 import os
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import asyncssh
@@ -33,7 +34,7 @@ from iotlabsshcli.sshlib import OpenLinuxSsh
 from .open_linux_test import _GRENOBLE_NODES, _ROOT_NODES, _SACLAY_NODES
 
 
-def _make_conn(exit_status=0, stdout="test"):
+def _make_conn(exit_status: int = 0, stdout: str = "test") -> MagicMock:
     """Return a mock asyncssh connection usable as an async context manager."""
     run_result = MagicMock()
     run_result.exit_status = exit_status
@@ -54,7 +55,7 @@ def _make_conn(exit_status=0, stdout="test"):
 
 
 @mark.parametrize("run_on_frontend", [False, True])
-def test_run(run_on_frontend):
+def test_run(run_on_frontend: bool) -> None:
     """Test running commands on ssh nodes."""
     config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)
@@ -63,7 +64,7 @@ def test_run(run_on_frontend):
     conn_ok = _make_conn(exit_status=0)
     conn_fail = _make_conn(exit_status=1)
 
-    def connect_side_effect(host, **_):
+    def connect_side_effect(host: str, **_: Any) -> MagicMock:
         return conn_ok if "saclay" in host else conn_fail
 
     with patch(
@@ -78,7 +79,7 @@ def test_run(run_on_frontend):
         assert ret == {"0": _SACLAY_NODES, "1": _GRENOBLE_NODES}
 
 
-def test_scp():
+def test_scp() -> None:
     """Test copying a file to SSH frontend nodes."""
     config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)
@@ -109,7 +110,7 @@ def test_scp():
     assert ret.get("0", []) == []
 
 
-def test_run_with_ssh_key():
+def test_run_with_ssh_key() -> None:
     """Test that a configured SSH_KEY is forwarded as client_keys."""
     config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)
@@ -129,7 +130,7 @@ def test_run_with_ssh_key():
     assert call_kwargs["client_keys"] == [os.path.expanduser("~/.ssh/id_rsa")]
 
 
-def test_wait_all_boot():
+def test_wait_all_boot() -> None:
     """Test waiting for ssh nodes to become available."""
     config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)

@@ -23,11 +23,12 @@
 import asyncio
 import os
 import time
+from typing import Any
 
 import asyncssh
 
 
-def _cleanup_result(result):
+def _cleanup_result(result: dict[str, list[str]]) -> dict[str, list[str]]:
     """Remove empty list from result.
 
     >>> _cleanup_result({ '0': [], '1': []})
@@ -49,7 +50,9 @@ def _cleanup_result(result):
     return result
 
 
-def _extend_result(result, new_result):
+def _extend_result(
+    result: dict[str, list[str]], new_result: dict[str, list[str]]
+) -> dict[str, list[str]]:
     """Extend result dictionnary values with new result
     dictionnary values
 
@@ -100,7 +103,7 @@ def _extend_result(result, new_result):
     return result
 
 
-def _check_all_nodes_processed(result):
+def _check_all_nodes_processed(result: dict[str, list[str]]) -> bool:
     """Verify all nodes are successful or failed.
 
     >>> _check_all_nodes_processed({ 'saclay': [], 'grenoble': []})
@@ -126,12 +129,14 @@ SSH_KEY = "~/.ssh/id_rsa" if os.getenv("IOT_LAB_FRONTEND_FQDN") else None
 class OpenLinuxSsh:
     """Implement SSH API using asyncssh."""
 
-    def __init__(self, config_ssh, groups, verbose=False):
+    def __init__(
+        self, config_ssh: dict[str, Any], groups: dict[str, list[str]], verbose: bool = False
+    ) -> None:
         self.config_ssh = config_ssh
         self.groups = groups
         self.verbose = verbose
 
-    def run(self, command, with_proxy=True, **kwargs):
+    def run(self, command: str, with_proxy: bool = True, **kwargs: Any) -> dict[str, list[str]]:
         """Run ssh command on nodes, optionally through a proxy."""
         result = {"0": [], "1": []}
         for site, hosts in self.groups.items():
@@ -143,7 +148,7 @@ class OpenLinuxSsh:
             result = _extend_result(result, result_cmd)
         return _cleanup_result(result)
 
-    def scp(self, src, dst):
+    def scp(self, src: str, dst: str) -> dict[str, list[str]]:
         """Copy file to SSH frontend via SFTP."""
         result = {"0": [], "1": []}
         for site in self.groups:
@@ -154,7 +159,7 @@ class OpenLinuxSsh:
                 result["1"].append(site)
         return _cleanup_result(result)
 
-    def wait(self, max_wait):
+    def wait(self, max_wait: int) -> dict[str, list[str]]:
         """Wait for requested Linux nodes until they boot."""
         result = {"0": [], "1": []}
         start_time = time.time()
@@ -167,13 +172,20 @@ class OpenLinuxSsh:
                 result = _extend_result(result, result_cmd)
         return _cleanup_result(result)
 
-    def _connect_kwargs(self, timeout=10):
+    def _connect_kwargs(self, timeout: int = 10) -> dict[str, Any]:
         kwargs = {"known_hosts": None, "connect_timeout": timeout}
         if SSH_KEY:
             kwargs["client_keys"] = [os.path.expanduser(SSH_KEY)]
         return kwargs
 
-    async def _run_command(self, command, hosts, proxy_host=None, timeout=10, **kwargs):
+    async def _run_command(
+        self,
+        command: str,
+        hosts: list[str],
+        proxy_host: str | None = None,
+        timeout: int = 10,
+        **kwargs: Any,
+    ) -> dict[str, list[str]]:
         tasks = [
             self._run_on_host(host, command, proxy_host=proxy_host, timeout=timeout, **kwargs)
             for host in hosts
@@ -190,7 +202,14 @@ class OpenLinuxSsh:
                 result["0"].append(host)
         return result
 
-    async def _run_on_host(self, host, command, proxy_host=None, timeout=10, **kwargs):
+    async def _run_on_host(
+        self,
+        host: str,
+        command: str,
+        proxy_host: str | None = None,
+        timeout: int = 10,
+        **kwargs: Any,
+    ) -> tuple[int, str]:
         ck = self._connect_kwargs(timeout)
         if proxy_host:
             async with asyncssh.connect(
@@ -204,7 +223,7 @@ class OpenLinuxSsh:
                 result = await conn.run(command, **kwargs)
                 return result.exit_status, result.stdout or ""
 
-    async def _copy_file(self, site, src, dst):
+    async def _copy_file(self, site: str, src: str, dst: str) -> None:
         ck = self._connect_kwargs()
         async with asyncssh.connect(site, username=self.config_ssh["user"], **ck) as conn:
             async with conn.start_sftp_client() as sftp:

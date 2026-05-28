@@ -24,6 +24,6 @@ from iotlabcli.helpers import deprecate_cmd
 from iotlabsshcli.parser.open_linux_parser import main as _main
 
 
-def open_a8_cli():
+def open_a8_cli() -> None:
     """Entry point for the deprecated open-a8-cli command."""
     deprecate_cmd(_main, "open-a8-cli", "iotlab-ssh")
