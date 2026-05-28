@@ -21,9 +21,10 @@
 
 """Tests for iotlabsshcli.open_linux package."""
 
-from unittest.mock import patch
+import os
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from pssh.exceptions import SFTPError
+import asyncssh
 from pytest import mark
 
 from iotlabsshcli.open_linux import _nodes_grouped
@@ -32,103 +33,114 @@ from iotlabsshcli.sshlib import OpenLinuxSsh
 from .open_linux_test import _GRENOBLE_NODES, _ROOT_NODES, _SACLAY_NODES
 
 
-# pylint: disable=too-few-public-methods
-class HostOutput:
-    """HostOutput test case class.
+def _make_conn(exit_status=0, stdout="test"):
+    """Return a mock asyncssh connection usable as an async context manager."""
+    run_result = MagicMock()
+    run_result.exit_status = exit_status
+    run_result.stdout = stdout
 
-    ParallelSSH run_command returns a list of pssh.output.HostOutput
-    objects since version 2.0.0.
-    """
+    conn = MagicMock()
+    conn.__aenter__ = AsyncMock(return_value=conn)
+    conn.__aexit__ = AsyncMock(return_value=False)
+    conn.run = AsyncMock(return_value=run_result)
 
-    def __init__(self, host=None, stdout=None, exit_code=None):
-        self.host = host
-        self.stdout = stdout
-        self.exit_code = exit_code
+    sftp = MagicMock()
+    sftp.__aenter__ = AsyncMock(return_value=sftp)
+    sftp.__aexit__ = AsyncMock(return_value=False)
+    sftp.put = AsyncMock()
+    conn.start_sftp_client = MagicMock(return_value=sftp)
+
+    return conn
 
 
 @mark.parametrize("run_on_frontend", [False, True])
-@patch("pssh.clients.ParallelSSHClient.run_command")
-@patch("pssh.clients.ParallelSSHClient.join")
-def test_run(join, run_command, run_on_frontend):
-    # pylint: disable=unused-argument
+def test_run(run_on_frontend):
     """Test running commands on ssh nodes."""
-    config_ssh = {
-        "user": "username",
-        "exp_id": 123,
-    }
-
-    test_command = "test"
+    config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)
-
     node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
-    # Print output of run_command
-    if run_on_frontend:
-        output = [HostOutput("saclay.iot-lab.info", "test", 0), HostOutput()]
-    else:
-        output = [HostOutput(host, "test", 1) for host in _GRENOBLE_NODES]
-        output.extend([HostOutput(host, "test", 0) for host in _SACLAY_NODES])
-    run_command.return_value = output
+    conn_ok = _make_conn(exit_status=0)
+    conn_fail = _make_conn(exit_status=1)
 
-    ret = node_ssh.run(test_command, with_proxy=not run_on_frontend)
+    def connect_side_effect(host, **_):
+        return conn_ok if "saclay" in host else conn_fail
+
+    with patch(
+        "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+        side_effect=connect_side_effect,
+    ):
+        ret = node_ssh.run("test", with_proxy=not run_on_frontend)
+
     if run_on_frontend:
         assert ret == {"0": ["saclay.iot-lab.info"], "1": ["grenoble.iot-lab.info"]}
     else:
         assert ret == {"0": _SACLAY_NODES, "1": _GRENOBLE_NODES}
-    assert run_command.call_count == len(groups)
-    run_command.assert_called_with(test_command, stop_on_errors=False)
 
 
-@patch("pssh.clients.SSHClient._init")
-@patch("pssh.clients.SSHClient.copy_file")
-def test_scp(copy_file, init):
-    # pylint: disable=unused-argument
-    """Test wait for ssh nodes to be available."""
-    config_ssh = {
-        "user": "username",
-        "exp_id": 123,
-    }
-
-    src = "test_src"
-    dst = "test_dst"
-
+def test_scp():
+    """Test copying a file to SSH frontend nodes."""
+    config_ssh = {"user": "username", "exp_id": 123}
     groups = _nodes_grouped(_ROOT_NODES)
-
-    node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
-    ret = node_ssh.scp(src, dst)
-    assert copy_file.call_count == 2
-    assert ret == {"0": ["saclay.iot-lab.info", "grenoble.iot-lab.info"]}
-
-    copy_file.side_effect = SFTPError()
-    ret = node_ssh.scp(src, dst)
-
-    assert ret == {"1": ["saclay.iot-lab.info", "grenoble.iot-lab.info"]}
-
-
-@patch("pssh.clients.ParallelSSHClient.run_command")
-@patch("pssh.clients.ParallelSSHClient.join")
-def test_wait_all_boot(join, run_command):
-    # pylint: disable=unused-argument
-    """Test wait for ssh nodes to be available."""
-    config_ssh = {
-        "user": "username",
-        "exp_id": 123,
-    }
-
-    test_command = "test"
-    groups = _nodes_grouped(_ROOT_NODES)
-
-    # normal boot
     node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
 
-    output = [HostOutput(host, "test", 0) for host in _ROOT_NODES]
-    run_command.return_value = output
+    conn = _make_conn()
 
-    node_ssh.wait(120)
-    assert run_command.call_count == 2
-    run_command.assert_called_with("uptime", stop_on_errors=False)
-    run_command.reset_mock()
+    with patch(
+        "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+        return_value=conn,
+    ):
+        ret = node_ssh.scp("test_src", "test_dst")
 
-    node_ssh.run(test_command)
-    assert run_command.call_count == 2
-    run_command.assert_called_with(test_command, stop_on_errors=False)
+    assert conn.start_sftp_client.call_count == 2
+    assert set(ret["0"]) == {"saclay.iot-lab.info", "grenoble.iot-lab.info"}
+    assert ret.get("1", []) == []
+
+    conn.start_sftp_client.return_value.put.side_effect = asyncssh.SFTPError(
+        asyncssh.FX_FAILURE, "error"
+    )
+    with patch(
+        "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+        return_value=conn,
+    ):
+        ret = node_ssh.scp("test_src", "test_dst")
+
+    assert set(ret["1"]) == {"saclay.iot-lab.info", "grenoble.iot-lab.info"}
+    assert ret.get("0", []) == []
+
+
+def test_run_with_ssh_key():
+    """Test that a configured SSH_KEY is forwarded as client_keys."""
+    config_ssh = {"user": "username", "exp_id": 123}
+    groups = _nodes_grouped(_ROOT_NODES)
+    node_ssh = OpenLinuxSsh(config_ssh, groups)
+
+    conn = _make_conn(exit_status=0)
+
+    with patch("iotlabsshcli.sshlib.open_linux_ssh.SSH_KEY", "~/.ssh/id_rsa"):
+        with patch(
+            "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+            return_value=conn,
+        ) as mock_connect:
+            node_ssh.run("uptime")
+
+    call_kwargs = mock_connect.call_args_list[0][1]
+    assert "client_keys" in call_kwargs
+    assert call_kwargs["client_keys"] == [os.path.expanduser("~/.ssh/id_rsa")]
+
+
+def test_wait_all_boot():
+    """Test waiting for ssh nodes to become available."""
+    config_ssh = {"user": "username", "exp_id": 123}
+    groups = _nodes_grouped(_ROOT_NODES)
+    node_ssh = OpenLinuxSsh(config_ssh, groups, verbose=True)
+
+    conn = _make_conn(exit_status=0)
+
+    with patch(
+        "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+        return_value=conn,
+    ):
+        result = node_ssh.wait(120)
+
+    assert result == {"0": sorted(_ROOT_NODES)}

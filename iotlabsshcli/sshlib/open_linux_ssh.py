@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-"""iotlabsshcli package implementing a ssh lib using parallel-ssh."""
+"""iotlabsshcli package implementing a ssh lib using asyncssh."""
 
 # This file is a part of IoT-LAB ssh-cli-tools
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -20,13 +20,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
+import asyncio
 import os
 import time
 
-import pssh
-from pssh import utils
-from pssh.clients import ParallelSSHClient, SSHClient
-from pssh.exceptions import AuthenticationError, SFTPError, UnknownHostError
+import asyncssh
 
 
 def _cleanup_result(result):
@@ -126,48 +124,33 @@ SSH_KEY = "~/.ssh/id_rsa" if os.getenv("IOT_LAB_FRONTEND_FQDN") else None
 
 
 class OpenLinuxSsh:
-    """Implement SSH API for Parallel SSH."""
+    """Implement SSH API using asyncssh."""
 
     def __init__(self, config_ssh, groups, verbose=False):
         self.config_ssh = config_ssh
         self.groups = groups
         self.verbose = verbose
 
-        if self.verbose:
-            utils.enable_logger(utils.logger)
-
     def run(self, command, with_proxy=True, **kwargs):
-        """Run ssh command using Parallel SSH."""
+        """Run ssh command on nodes, optionally through a proxy."""
         result = {"0": [], "1": []}
         for site, hosts in self.groups.items():
             proxy_host = site if with_proxy else None
-            hosts = hosts if with_proxy else [site]
-            result_cmd = self.run_command(
-                command,
-                hosts=hosts,
-                user=self.config_ssh["user"],
-                verbose=self.verbose,
-                proxy_host=proxy_host,
-                **kwargs,
+            run_hosts = hosts if with_proxy else [site]
+            result_cmd = asyncio.run(
+                self._run_command(command, run_hosts, proxy_host=proxy_host, **kwargs)
             )
             result = _extend_result(result, result_cmd)
         return _cleanup_result(result)
 
     def scp(self, src, dst):
-        """Copy file using Parallel SCP native client."""
+        """Copy file to SSH frontend via SFTP."""
         result = {"0": [], "1": []}
-        sites = self.groups.keys()
-        for site in sites:
+        for site in self.groups:
             try:
-                client = SSHClient(site, user=self.config_ssh["user"], pkey=SSH_KEY, timeout=10)
-                client.copy_file(src, dst)
+                asyncio.run(self._copy_file(site, src, dst))
                 result["0"].append(site)
-            except (
-                SFTPError,
-                UnknownHostError,
-                AuthenticationError,
-                pssh.exceptions.ConnectionError,
-            ):
+            except (asyncssh.Error, OSError):
                 result["1"].append(site)
         return _cleanup_result(result)
 
@@ -178,49 +161,51 @@ class OpenLinuxSsh:
         groups = self.groups.copy()
         while start_time + max_wait > time.time() and not _check_all_nodes_processed(groups):
             for site, hosts in groups.copy().items():
-                result_cmd = self.run_command(
-                    "uptime",
-                    hosts=hosts,
-                    user=self.config_ssh["user"],
-                    verbose=self.verbose,
-                    proxy_host=site,
-                )
+                result_cmd = asyncio.run(self._run_command("uptime", hosts, proxy_host=site))
                 groups[site] = result_cmd["1"]
                 groups = _cleanup_result(groups)
                 result = _extend_result(result, result_cmd)
         return _cleanup_result(result)
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    @staticmethod
-    def run_command(command, hosts, user, verbose=False, proxy_host=None, timeout=10, **kwargs):
-        """Run ssh command using Parallel SSH."""
+    def _connect_kwargs(self, timeout=10):
+        kwargs = {"known_hosts": None, "connect_timeout": timeout}
+        if SSH_KEY:
+            kwargs["client_keys"] = [os.path.expanduser(SSH_KEY)]
+        return kwargs
+
+    async def _run_command(self, command, hosts, proxy_host=None, timeout=10, **kwargs):
+        tasks = [
+            self._run_on_host(host, command, proxy_host=proxy_host, timeout=timeout, **kwargs)
+            for host in hosts
+        ]
+        outcomes = await asyncio.gather(*tasks, return_exceptions=True)
         result = {"0": [], "1": []}
-        if proxy_host:
-            client = ParallelSSHClient(
-                hosts,
-                user="root",
-                pkey=SSH_KEY,
-                proxy_host=proxy_host,
-                proxy_user=user,
-                proxy_pkey=SSH_KEY,
-                timeout=timeout,
-            )
-        else:
-            client = ParallelSSHClient(hosts, user=user, pkey=SSH_KEY, timeout=timeout)
-        output = client.run_command(command, stop_on_errors=False, **kwargs)
-        client.join(output)
-        # output = pssh.output.HostOutput objects list
-        for host in output:
-            if host.exit_code == 0:
-                if verbose and host.stdout:
-                    for line in host.stdout:
+        for host, outcome in zip(hosts, outcomes):
+            if isinstance(outcome, BaseException) or outcome[0] != 0:
+                result["1"].append(host)
+            else:
+                if self.verbose and outcome[1]:
+                    for line in outcome[1].splitlines():
                         print(line)
-                result["0"].append(host.host)
-            elif host.host is not None:
-                result["1"].append(host.host)
-        # find hosts that have raised Exception (Authentication, Connection)
-        # host.exception = pssh.exceptions.* & host.host = None
-        failed_hosts = list(set(hosts) - set(sum(result.values(), [])))
-        if failed_hosts:
-            result["1"].extend(failed_hosts)
+                result["0"].append(host)
         return result
+
+    async def _run_on_host(self, host, command, proxy_host=None, timeout=10, **kwargs):
+        ck = self._connect_kwargs(timeout)
+        if proxy_host:
+            async with asyncssh.connect(
+                proxy_host, username=self.config_ssh["user"], **ck
+            ) as tunnel:
+                async with asyncssh.connect(host, username="root", tunnel=tunnel, **ck) as conn:
+                    result = await conn.run(command, **kwargs)
+                    return result.exit_status, result.stdout or ""
+        else:
+            async with asyncssh.connect(host, username=self.config_ssh["user"], **ck) as conn:
+                result = await conn.run(command, **kwargs)
+                return result.exit_status, result.stdout or ""
+
+    async def _copy_file(self, site, src, dst):
+        ck = self._connect_kwargs()
+        async with asyncssh.connect(site, username=self.config_ssh["user"], **ck) as conn:
+            async with conn.start_sftp_client() as sftp:
+                await sftp.put(src, dst)
