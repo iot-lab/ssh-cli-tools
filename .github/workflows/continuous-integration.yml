@@ -46,9 +46,8 @@ jobs:
     - name: Upload coverage to Codecov
       if: ${{ matrix.python-version == '3.13' }}
       uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
     - name: Check package
       if: ${{ matrix.python-version == '3.13' }}
