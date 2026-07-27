@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.2.2
+-----
+
+- CI: build package in workspace before publishing to PyPI
+
 1.2.1
 -----
 
