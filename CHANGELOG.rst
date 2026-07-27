@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.2.0
+-----
+
+- migrate to pyproject.toml and remove setup.py
+- migrate to asyncssh and drop parallel-ssh dependency
+- add type hints
+
 1.1.0
 -----
 
