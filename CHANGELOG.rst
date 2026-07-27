@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.2.1
+-----
+
+- remove publish to testpypi in CI workflow
+
 1.2.0
 -----
 

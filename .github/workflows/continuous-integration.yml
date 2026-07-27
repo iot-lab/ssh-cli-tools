@@ -52,15 +52,6 @@ jobs:
     - name: Check package
       if: ${{ matrix.python-version == '3.13' }}
       run: tox -e py313-checksetup
-    - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      if: >-
-        matrix.python-version == '3.13' &&
-        github.event_name == 'push' &&
-        startsWith(github.event.ref, 'refs/tags')
-      with:
-        password: ${{ secrets.test_pypi_password }}
-        repository-url: https://test.pypi.org/legacy/
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       if: >-
