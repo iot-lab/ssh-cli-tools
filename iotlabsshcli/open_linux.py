@@ -51,8 +51,10 @@ def _nodes_grouped(nodes: list[str]) -> OrderedDict[str, list[str]]:
     return result
 
 
-_FLASH_CMD = "source /etc/profile && /usr/bin/iotlab_flash {fw} {bin}"
-_RESET_CMD = "source /etc/profile && /usr/bin/iotlab_reset"
+# The commands of the gateway code are in /usr/bin on the Yocto images and
+# in /usr/local/bin on the OCI ones: the profile sets a PATH with both
+_FLASH_CMD = "source /etc/profile && iotlab_flash {fw} {bin}"
+_RESET_CMD = "source /etc/profile && iotlab_reset"
 _MAKE_EXECUTABLE_CMD = "chmod +x {}"
 _RUN_SCRIPT_CMD = 'source /etc/profile && screen -S {screen} -dm bash -c "{path}"'
 _QUIT_SCRIPT_CMD = "screen -X -S {screen} quit"
