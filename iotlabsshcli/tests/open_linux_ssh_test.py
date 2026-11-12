@@ -21,7 +21,10 @@
 
 """Tests for iotlabsshcli.open_linux package."""
 
+import asyncio
 import os
+import threading
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -49,6 +52,7 @@ def _make_conn(exit_status: int = 0, stdout: str = "test") -> MagicMock:
     sftp.__aenter__ = AsyncMock(return_value=sftp)
     sftp.__aexit__ = AsyncMock(return_value=False)
     sftp.put = AsyncMock()
+    sftp.makedirs = AsyncMock()
     conn.start_sftp_client = MagicMock(return_value=sftp)
 
     return conn
@@ -96,6 +100,8 @@ def test_scp() -> None:
     assert conn.start_sftp_client.call_count == 2
     assert set(ret["0"]) == {"saclay.iot-lab.info", "grenoble.iot-lab.info"}
     assert ret.get("1", []) == []
+    # a file name alone: no directory to create
+    conn.start_sftp_client.return_value.makedirs.assert_not_awaited()
 
     conn.start_sftp_client.return_value.put.side_effect = asyncssh.SFTPError(
         asyncssh.FX_FAILURE, "error"
@@ -108,6 +114,85 @@ def test_scp() -> None:
 
     assert set(ret["1"]) == {"saclay.iot-lab.info", "grenoble.iot-lab.info"}
     assert ret.get("0", []) == []
+
+
+class _NoAuthServer(asyncssh.SSHServer):  # pylint: disable=too-few-public-methods
+    """An SSH server that lets everyone in."""
+
+    def begin_auth(self, username: str) -> bool:
+        """No authentication, whoever the user is."""
+        del username
+        return False
+
+
+class _LocalSftp(threading.Thread):
+    """An SFTP server on the loopback, the home of its users in a directory."""
+
+    def __init__(self, home: Path) -> None:
+        super().__init__(daemon=True)
+        self.home = home
+        self.port = 0
+        self._loop = asyncio.new_event_loop()
+        self._ready = threading.Event()
+
+    def run(self) -> None:
+        asyncio.set_event_loop(self._loop)
+        server = self._loop.run_until_complete(
+            asyncssh.listen(
+                "127.0.0.1",
+                0,
+                server_host_keys=[asyncssh.generate_private_key("ssh-ed25519")],
+                server_factory=_NoAuthServer,
+                sftp_factory=lambda chan: asyncssh.SFTPServer(chan, chroot=str(self.home)),
+            )
+        )
+        self.port = server.sockets[0].getsockname()[1]
+        self._ready.set()
+        self._loop.run_forever()
+        server.close()
+        self._loop.run_until_complete(server.wait_closed())
+        self._loop.close()
+
+    def __enter__(self) -> "_LocalSftp":
+        self.start()
+        assert self._ready.wait(10)
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self._loop.call_soon_threadsafe(self._loop.stop)
+        self.join(10)
+
+
+def test_scp_creates_the_remote_directory(tmp_path: Path) -> None:
+    """Test copying a file in a directory the SSH frontend does not have yet.
+
+    The first copy of an account: on a real SFTP server, a mock of it takes
+    any path.
+    """
+    source = tmp_path / "firmware.elf"
+    source.write_bytes(b"firmware")
+    home = tmp_path / "home"
+    home.mkdir()
+    groups = {"saclay.iot-lab.info": ["node-a8-1.saclay.iot-lab.info"]}
+    node_ssh = OpenLinuxSsh({"user": "username", "exp_id": 123}, groups)
+    connect = asyncssh.connect
+
+    with _LocalSftp(home) as server:
+
+        def local_connect(_: str, **kwargs: Any) -> Any:
+            return connect("127.0.0.1", server.port, **kwargs)
+
+        with patch(
+            "iotlabsshcli.sshlib.open_linux_ssh.asyncssh.connect",
+            side_effect=local_connect,
+        ):
+            first = node_ssh.scp(str(source), "shared/.iotlabsshcli/firmware.elf")
+            again = node_ssh.scp(str(source), "shared/.iotlabsshcli/firmware.elf")
+
+    assert first == {"0": ["saclay.iot-lab.info"]}
+    assert (home / "shared" / ".iotlabsshcli" / "firmware.elf").read_bytes() == b"firmware"
+    # the directory is there the next time
+    assert again == first
 
 
 def test_run_with_ssh_key() -> None:
