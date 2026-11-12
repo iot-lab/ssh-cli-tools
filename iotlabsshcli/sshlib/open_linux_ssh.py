@@ -227,4 +227,8 @@ class OpenLinuxSsh:
         ck = self._connect_kwargs()
         async with asyncssh.connect(site, username=self.config_ssh["user"], **ck) as conn:
             async with conn.start_sftp_client() as sftp:
+                # put() does not create the directory of the remote file
+                directory = os.path.dirname(dst)
+                if directory:
+                    await sftp.makedirs(directory, exist_ok=True)
                 await sftp.put(src, dst)
