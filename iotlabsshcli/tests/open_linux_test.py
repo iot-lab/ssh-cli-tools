@@ -46,6 +46,15 @@ _GRENOBLE_NODES = [f"node-a8-{n}.grenoble.iot-lab.info" for n in range(1, 4)]
 _ROOT_NODES = _SACLAY_NODES + _GRENOBLE_NODES
 
 
+def test_node_commands_are_found_in_the_path() -> None:
+    """Test that the commands of the nodes are not tied to a directory.
+
+    They are in /usr/bin on the Yocto images, in /usr/local/bin on the OCI ones.
+    """
+    assert _FLASH_CMD.format(fw="fw.elf", bin="") == "source /etc/profile && iotlab_flash fw.elf "
+    assert _RESET_CMD == "source /etc/profile && iotlab_reset"
+
+
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.run")
 @patch("iotlabsshcli.sshlib.OpenLinuxSsh.scp")
 def test_open_linux_flash(scp: Any, run: Any) -> None:
