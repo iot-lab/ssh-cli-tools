@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.2.3
+-----
+
+- fix: flash and reset commands of the nodes found in their PATH
+- fix: directory of a copied file created on the SSH frontend
+
 1.2.2
 -----
 
